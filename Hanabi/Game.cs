@@ -8,12 +8,12 @@
         bool _isLastRound;
         int _playerWhoDrewLastCard = -1;
 
-        public int NumLives { get; private set; }
-        public int NumTokens { get; set; } = MAX_TOKENS;
-        public int CurrentPlayer { get; private set; } = 0;
+        public int NumLives { get; internal set; }
+        public int NumTokens { get; internal set; } = MAX_TOKENS;
+        public int CurrentPlayer { get; internal set; } = 0;
         public List<Player> Players { get; }
         public Deck Deck { get; }
-        public bool IsOver { get; private set; }
+        public bool IsOver { get; internal set; }
         public Dictionary<Color, int> Stacks { get; set; }
 
         public Game(int numPlayers, Deck deck, int numStartingLives = 3)

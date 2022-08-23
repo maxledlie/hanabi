@@ -7,12 +7,12 @@
 
         public int NumCardsRemaining => _cards.Count - _index;
 
-        public Deck(List<Card> cards)
+        internal Deck(List<Card> cards)
         {
             _cards = cards;
         }
 
-        public Card? DrawCard()
+        internal Card? DrawCard()
         {
             if (_index >= _cards.Count)
                 return null;
