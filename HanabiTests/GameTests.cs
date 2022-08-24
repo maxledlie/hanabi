@@ -5,9 +5,9 @@ using System.Collections.Generic;
 
 namespace HanabiTests
 {
-    internal class GameTests
+    public class GameTests
     {
-        private Deck TestDeck() => new Deck(new List<Card>
+        public static Deck TestDeck() => new Deck(new List<Card>
         {
             // Player 0 hand
             new Card(Color.Red, 1),
@@ -241,6 +241,19 @@ namespace HanabiTests
         }
 
         [Test]
+        public void Discard_CardAddedToDiscardPile()
+        {
+            var game = new Game(2, TestDeck());
+
+            game.Discard(0);
+            game.Discard(0);
+
+            Assert.That(game.DiscardPile.Count, Is.EqualTo(2));
+            Assert.That(game.DiscardPile[0].Equals(new Card(Color.Red, 1)));
+            Assert.That(game.DiscardPile[1].Equals(new Card(Color.Yellow, 5)));
+        }
+
+        [Test]
         public void PlayCard_PlayerReceivesNextCardInDeck()
         {
             var deck = TestDeck();
@@ -267,10 +280,29 @@ namespace HanabiTests
         public void PlayCard_IncorrectPlay_LosesALife()
         {
             var game = new Game(2, TestDeck(), numStartingLives: 3);
-            game.PlayCard(1); // Player 1 plays [Green 3]
+            game.PlayCard(1); // Player 0 plays [Green 3]
 
             Assert.That(game.Stacks[Color.Green], Is.EqualTo(0));
             Assert.That(game.NumLives, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void PlayCard_IncorrectPlayOnLastLife_EndsGame()
+        {
+            var game = new Game(2, TestDeck(), numStartingLives: 1);
+            game.PlayCard(1); // Player 0 plays [Green 3]
+
+            Assert.That(game.IsOver);
+        }
+
+        [Test]
+        public void PlayCard_IncorrectPlay_CardAddedToDiscardPile()
+        {
+            var game = new Game(2, TestDeck());
+            game.PlayCard(1);
+
+            Assert.That(game.DiscardPile.Count, Is.EqualTo(1));
+            Assert.That(game.DiscardPile[0].Equals(new Card(Color.Green, 3)));
         }
 
         [TestCase(7, 8, Description="Playing a 5 with fewer than max tokens will restore one")]

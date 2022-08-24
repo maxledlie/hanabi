@@ -8,6 +8,7 @@
         bool _isLastRound;
         int _playerWhoDrewLastCard = -1;
 
+        public int NumPlayers => Players.Count;
         public int NumLives { get; internal set; }
         public int NumTokens { get; internal set; } = MAX_TOKENS;
         public int CurrentPlayer { get; internal set; } = 0;
@@ -15,6 +16,7 @@
         public Deck Deck { get; }
         public bool IsOver { get; internal set; }
         public Dictionary<Color, int> Stacks { get; set; }
+        public List<Card> DiscardPile { get; internal set; } = new List<Card>();
 
         public Game(int numPlayers, Deck deck, int numStartingLives = 3)
         {
@@ -51,7 +53,9 @@
             if (NumTokens < MAX_TOKENS)
                 NumTokens++;
 
+            Card discardedCard = Players[CurrentPlayer].Hand[positionInHand];
             Players[CurrentPlayer].Hand.RemoveAt(positionInHand);
+            DiscardPile.Add(discardedCard);
 
             Card? nextCard = Deck.DrawCard();
 
@@ -61,7 +65,7 @@
             EndTurn();
         }
 
-        public void TellColor(int player, Color color)
+        public TellColor(int player, Color color)
         {
             if (NumTokens <= 0)
                 throw new RuleViolationException("At least one token is required to tell anything");
@@ -119,7 +123,10 @@
             } else
             {
                 // Card cannot be played: discard it and lose a life
+                DiscardPile.Add(playedCard);
                 NumLives--;
+                if (NumLives == 0)
+                    IsOver = true;
             }
 
             Players[CurrentPlayer].Hand.RemoveAt(positionInHand);
@@ -130,6 +137,23 @@
                 Players[CurrentPlayer].Hand.Add(nextCard);
 
             EndTurn();
+        }
+
+        public int Score() => Stacks.Values.Sum();
+
+        public bool IsWinnable()
+        {
+            foreach (Color color in Enum.GetValues(typeof(Color)))
+            {
+                for (int i = 1; i < 6; i++)
+                {
+                    int numInstances = i == 1 ? 3 : (i == 5 ? 1 : 2);
+                    if (DiscardPile.Where(card => card.Color == color && card.Number == i).Count() >= numInstances)
+                        return false;
+                }
+            }
+
+            return true;
         }
 
         void EndTurn()

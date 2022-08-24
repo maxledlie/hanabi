@@ -1,6 +1,6 @@
 ﻿namespace Hanabi
 {
-    public class Deck
+    public class Deck : ICloneable
     {
         private int _index = 0;
         private List<Card> _cards;
@@ -52,6 +52,11 @@
                 int j = rand.Next(i, n - 1);
                 (list[j], list[i]) = (list[i], list[j]);
             }
+        }
+
+        public object Clone()
+        {
+            return new Deck(new List<Card>(_cards));
         }
     }
 }
