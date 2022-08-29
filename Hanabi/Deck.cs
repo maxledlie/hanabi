@@ -58,5 +58,7 @@
         {
             return new Deck(new List<Card>(_cards));
         }
+
+        public static int NumInstances(int number) => number == 5 ? 1 : (number == 1 ? 3 : 2);
     }
 }

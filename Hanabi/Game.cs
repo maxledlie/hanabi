@@ -12,7 +12,7 @@
         public int NumLives { get; internal set; }
         public int NumTokens { get; internal set; } = MAX_TOKENS;
         public int CurrentPlayer { get; internal set; } = 0;
-        public List<Player> Players { get; }
+        public List<Player> Players { get; internal set; }
         public Deck Deck { get; }
         public bool IsOver { get; internal set; }
         public Dictionary<Color, int> Stacks { get; set; }
@@ -65,7 +65,7 @@
             EndTurn();
         }
 
-        public TellColor(int player, Color color)
+        public void TellColor(int player, Color color)
         {
             if (NumTokens <= 0)
                 throw new RuleViolationException("At least one token is required to tell anything");
@@ -154,6 +154,24 @@
             }
 
             return true;
+        }
+
+        public Game Clone()
+        {
+            if (Deck.Clone() is not Deck deck) throw new Exception("Cloning deck failed");
+
+            return new Game(NumPlayers, deck)
+            {
+                NumTokens = NumTokens,
+                NumLives = NumLives,
+                CurrentPlayer = CurrentPlayer,
+                _playerWhoDrewLastCard = _playerWhoDrewLastCard,
+                _isLastRound = _isLastRound,
+                _numPlayers = _numPlayers,
+                Players = Players.Select(player => new Player(new List<Card>(player.Hand))).ToList(),
+                Stacks = new Dictionary<Color, int>(Stacks),
+                DiscardPile = new List<Card>(DiscardPile)
+            };
         }
 
         void EndTurn()
