@@ -7,13 +7,15 @@ namespace Agents
         public static void Main()
         {
             int numPlayers = 4;
-            var game = new Game(numPlayers, Deck.Random());
 
             var agents = new List<BayesianAgent>();
+            var game = new Game(numPlayers, Deck.Random());
             for (int i = 0; i < numPlayers; i++)
             {
-                var adapter = new GameView(i, game);
-                agents.Add(new BayesianAgent(i, adapter));
+                var view = new GameView(i, game);
+                var agent = new BayesianAgent(i, view);
+                game.RegisterAgent(i, agent);
+                agents.Add(agent);
             }
 
             while (!game.IsOver)

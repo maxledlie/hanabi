@@ -17,24 +17,24 @@ namespace Agents
 
         public IEnumerable<string> AvailableMoves()
         {
-            Player player = _game.Players[_game.CurrentPlayer];
+            List<Card> hand = _game.PlayerHands[_game.CurrentPlayer];
 
-            IEnumerable<string> playOptions = player.Hand.Select((_, i) => $"discard {i}");
-            IEnumerable<string> discardOptions = player.Hand.Select((_, i) => $"play {i}");
+            IEnumerable<string> playOptions = hand.Select((_, i) => $"discard {i}");
+            IEnumerable<string> discardOptions = hand.Select((_, i) => $"play {i}");
 
             if (_game.NumTokens <= 0)
                 return playOptions.Concat(discardOptions);
 
-            IEnumerable<string> tellOptions = _game.Players.SelectMany((otherPlayer, iPlayer) =>
+            IEnumerable<string> tellOptions = _game.PlayerHands.SelectMany((otherHand, iPlayer) =>
             {
                 if (iPlayer == _game.CurrentPlayer)
                     return new List<string>();
 
-                var colorOptions = otherPlayer.Hand.Select(card => card.Color)
+                var colorOptions = otherHand.Select(card => card.Color)
                     .Distinct()
                     .Select(color => $"tell player {iPlayer} about color {GetColorName(color)}");
 
-                var numberOptions = otherPlayer.Hand.Select(card => card.Number)
+                var numberOptions = otherHand.Select(card => card.Number)
                     .Distinct()
                     .Select(number => $"tell player {iPlayer} about number {number}");
 
@@ -72,7 +72,7 @@ namespace Agents
 
             if (moveTokens[4] == "color")
             {
-                Color color = (Color)Enum.Parse(typeof(Color), moveTokens[5]);
+                Color color = Enum.Parse<Color>(moveTokens[5], ignoreCase: true);
                 gameClone.TellColor(playerIndex, color);
                 return gameClone;
             } else
@@ -86,6 +86,14 @@ namespace Agents
         public int NumPlayers => _game.NumPlayers;
         public int NumTokens => _game.NumTokens;
         public int NumLives => _game.NumLives;
-        public List<Player> Players => _game.Players;
+        public List<List<Card>> OtherHands
+        {
+            get
+            {
+                var hands = _game.PlayerHands.ToList();
+                hands.RemoveAt(_playerIndex);
+                return hands;
+            }
+        }
     }
 }

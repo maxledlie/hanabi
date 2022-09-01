@@ -76,7 +76,7 @@ namespace HanabiTests
             Assert.That(game.NumLives, Is.EqualTo(3));
             Assert.That(game.NumTokens, Is.EqualTo(8));
             Assert.That(game.CurrentPlayer, Is.EqualTo(0));
-            Assert.That(game.Players.Count, Is.EqualTo(3));
+            Assert.That(game.PlayerHands.Count, Is.EqualTo(3));
         }
 
         [TestCase(2, 5)]
@@ -88,7 +88,7 @@ namespace HanabiTests
             var game = new Game(numPlayers, Deck.Random());
 
             for (int i = 0; i < numPlayers; i++)
-                Assert.That(game.Players[i].Hand.Count, Is.EqualTo(numCards));
+                Assert.That(game.PlayerHands[i].Count, Is.EqualTo(numCards));
         }
 
         [Test]
@@ -97,9 +97,9 @@ namespace HanabiTests
             var deck = Deck.Random();
             var game = new Game(3, deck);
 
-            Assert.That(game.Players[0].Hand.Count, Is.EqualTo(5));
-            Assert.That(game.Players[1].Hand.Count, Is.EqualTo(5));
-            Assert.That(game.Players[2].Hand.Count, Is.EqualTo(5));
+            Assert.That(game.PlayerHands[0].Count, Is.EqualTo(5));
+            Assert.That(game.PlayerHands[1].Count, Is.EqualTo(5));
+            Assert.That(game.PlayerHands[2].Count, Is.EqualTo(5));
             Assert.That(deck.NumCardsRemaining, Is.EqualTo(35));
         }
 
@@ -236,7 +236,7 @@ namespace HanabiTests
 
             game.Discard(0);
 
-            Assert.That(game.Players[0].Hand[4].Equals(new Card(Color.Red, 5)));
+            Assert.That(game.PlayerHands[0][4].Equals(new Card(Color.Red, 5)));
             Assert.That(deck.NumCardsRemaining, Is.EqualTo(numCardsRemainingBeforeDiscard - 1));
         }
 
@@ -262,7 +262,7 @@ namespace HanabiTests
 
             game.PlayCard(0);
 
-            Assert.That(game.Players[0].Hand[4].Equals(new Card(Color.Red, 5)));
+            Assert.That(game.PlayerHands[0][4].Equals(new Card(Color.Red, 5)));
             Assert.That(deck.NumCardsRemaining, Is.EqualTo(numCardsRemainingBeforeDiscard - 1));
         }
 

@@ -4,15 +4,15 @@
     {
         public static int MAX_TOKENS = 8;
 
-        int _numPlayers;
         bool _isLastRound;
         int _playerWhoDrewLastCard = -1;
+        Dictionary<int, IAgent> _players = new Dictionary<int, IAgent>();
 
-        public int NumPlayers => Players.Count;
+        public int NumPlayers { get; }
         public int NumLives { get; internal set; }
         public int NumTokens { get; internal set; } = MAX_TOKENS;
         public int CurrentPlayer { get; internal set; } = 0;
-        public List<Player> Players { get; internal set; }
+        public List<List<Card>> PlayerHands { get; internal set; } = new List<List<Card>>();
         public Deck Deck { get; }
         public bool IsOver { get; internal set; }
         public Dictionary<Color, int> Stacks { get; set; }
@@ -21,9 +21,8 @@
         public Game(int numPlayers, Deck deck, int numStartingLives = 3)
         {
             Deck = deck;
-            _numPlayers = numPlayers;
             NumLives = numStartingLives;
-            Players = new List<Player>();
+            NumPlayers = numPlayers;
 
             int cardsPerPlayer = numPlayers > 3 ? 4 : 5;
 
@@ -37,7 +36,7 @@
                         hand.Add(card);
                 }
 
-                Players.Add(new Player(hand));
+                PlayerHands.Add(hand);
             }
 
             // Initialise stacks
@@ -48,19 +47,24 @@
             }
         }
 
+        public void RegisterAgent(int playerIndex, IAgent agent)
+        {
+            _players[playerIndex] = agent;
+        }
+
         public void Discard(int positionInHand)
         {
             if (NumTokens < MAX_TOKENS)
                 NumTokens++;
 
-            Card discardedCard = Players[CurrentPlayer].Hand[positionInHand];
-            Players[CurrentPlayer].Hand.RemoveAt(positionInHand);
+            Card discardedCard = PlayerHands[CurrentPlayer][positionInHand];
+            PlayerHands[CurrentPlayer].RemoveAt(positionInHand);
             DiscardPile.Add(discardedCard);
 
             Card? nextCard = Deck.DrawCard();
 
             if (nextCard != null)
-                Players[CurrentPlayer].Hand.Add(nextCard);
+                PlayerHands[CurrentPlayer].Add(nextCard);
 
             EndTurn();
         }
@@ -73,13 +77,22 @@
             if (player == CurrentPlayer)
                 throw new RuleViolationException("You cannot tell yourself anything");
 
-            Player recipient = Players[player];
-
-            if (!recipient.Hand.Any(card => card.Color == color))
+            if (!PlayerHands[player].Any(card => card.Color == color))
                 throw new RuleViolationException("You can only tell a player about a color if they are " +
                     "holding at least one card of that color");
 
+            var handPositionsString = Enumerable.Range(0, 5)
+                .Where(i => PlayerHands[player][i].Color == color)
+                .Select(i => i.ToString())
+                .Aggregate("", (current, next) => current + " " + next);
+
             NumTokens--;
+
+            foreach (var agent in _players.Values)
+            {
+                agent.RespondToMove($"Player {CurrentPlayer}: tell player {player} about color " +
+                    $"{color.ToString().ToLower()}: {handPositionsString}");
+            }
             EndTurn();
         }
 
@@ -91,9 +104,7 @@
             if (player == CurrentPlayer)
                 throw new RuleViolationException("You cannot tell yourself anything");
 
-            Player recipient = Players[player];
-
-            if (!recipient.Hand.Any(card => card.Number == number))
+            if (!PlayerHands[player].Any(card => card.Number == number))
                 throw new RuleViolationException("You can only tell a player about a number if they are " +
                     "holding at least one card of that number");
 
@@ -103,7 +114,7 @@
 
         public void PlayCard(int positionInHand)
         {
-            Card playedCard = Players[CurrentPlayer].Hand[positionInHand];
+            Card playedCard = PlayerHands[CurrentPlayer][positionInHand];
             
             if (Stacks[playedCard.Color] == playedCard.Number - 1)
             {
@@ -129,12 +140,12 @@
                     IsOver = true;
             }
 
-            Players[CurrentPlayer].Hand.RemoveAt(positionInHand);
+            PlayerHands[CurrentPlayer].RemoveAt(positionInHand);
 
             Card? nextCard = Deck.DrawCard();
 
             if (nextCard != null)
-                Players[CurrentPlayer].Hand.Add(nextCard);
+                PlayerHands[CurrentPlayer].Add(nextCard);
 
             EndTurn();
         }
@@ -167,8 +178,6 @@
                 CurrentPlayer = CurrentPlayer,
                 _playerWhoDrewLastCard = _playerWhoDrewLastCard,
                 _isLastRound = _isLastRound,
-                _numPlayers = _numPlayers,
-                Players = Players.Select(player => new Player(new List<Card>(player.Hand))).ToList(),
                 Stacks = new Dictionary<Color, int>(Stacks),
                 DiscardPile = new List<Card>(DiscardPile)
             };
@@ -186,7 +195,7 @@
                 IsOver = true;
             }
 
-            CurrentPlayer = (CurrentPlayer + 1) % _numPlayers;
+            CurrentPlayer = (CurrentPlayer + 1) % NumPlayers;
         }
     }
 }

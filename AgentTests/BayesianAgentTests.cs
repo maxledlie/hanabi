@@ -58,5 +58,33 @@ namespace AgentTests
                 Assert.That(probs[i].Get(new Card(Color.White, 5)), Is.Zero);
             }
         }
+
+        [Test]
+        public void HandProbabilities_AfterTell_ReflectsNewKnowledge()
+        {
+            var game = new Game(3, GameTests.TestDeck());
+            var view = new GameView(0, game);
+            var agent = new BayesianAgent(0, view);
+
+            game.RegisterAgent(0, agent);
+
+            game.TellColor(1, Color.White); // Our agent tells player 1 something, just to progress the game
+            game.TellColor(0, Color.Green); // Player 1 tells our agent about their green cards. This should update their knowledge.
+
+            var probs = agent.HandProbabilities;
+
+            // We now know that our zeroth card is NOT green. Since we can see one green in our teammates hands,
+            // this removes 9 possibilites, leaving us with 31
+            Assert.That(probs[0].Get(Color.Green, 1), Is.Zero);
+            Assert.That(probs[0].Get(Color.Red, 1), Is.EqualTo(2.0 / 31));
+
+            // We now know that our first card IS green.
+            Assert.That(probs[1].Get(Color.Red, 1), Is.Zero);
+            Assert.That(probs[1].Get(Color.Green, 1), Is.EqualTo(2.0 / 9));
+            Assert.That(probs[1].Get(Color.Green, 2), Is.EqualTo(2.0 / 9));
+            Assert.That(probs[1].Get(Color.Green, 3), Is.EqualTo(2.0 / 9));
+            Assert.That(probs[1].Get(Color.Green, 4), Is.EqualTo(2.0 / 9));
+            Assert.That(probs[1].Get(Color.Green, 5), Is.EqualTo(1.0 / 9));
+        }
     }
 }
