@@ -66,6 +66,11 @@
             if (nextCard != null)
                 PlayerHands[CurrentPlayer].Add(nextCard);
 
+            foreach (var agent in _players.Values)
+            {
+                agent.RespondToMove($"Player {CurrentPlayer}: discard {positionInHand}");
+            }
+
             EndTurn();
         }
 
@@ -108,7 +113,18 @@
                 throw new RuleViolationException("You can only tell a player about a number if they are " +
                     "holding at least one card of that number");
 
+            var handPositionsString = Enumerable.Range(0, 5)
+                .Where(i => PlayerHands[player][i].Number == number)
+                .Select(i => i.ToString())
+                .Aggregate("", (current, next) => current + " " + next);
+
             NumTokens--;
+
+            foreach (var agent in _players.Values)
+            {
+                agent.RespondToMove($"Player {CurrentPlayer}: tell player {player} about number " +
+                    $"{number}: {handPositionsString}");
+            }
             EndTurn();
         }
 

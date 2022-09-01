@@ -88,6 +88,7 @@ namespace Agents
         {
             string[] parts = move.Split(':', StringSplitOptions.RemoveEmptyEntries);
             string playerName = parts[0];
+            int playerIndex = int.Parse(playerName.Split()[1]);
             string moveDescription = parts[1];
             string handPositions = parts.Length > 2 ? parts[2] : "";
 
@@ -99,7 +100,7 @@ namespace Agents
                     RespondToTell(moveTokens, handPositions);
                     return;
                 case "discard":
-                    RespondToDiscard(moveTokens);
+                    RespondToDiscard(playerIndex, moveTokens);
                     return;
                 case "play":
                     RespondToPlay(moveTokens);
@@ -147,9 +148,17 @@ namespace Agents
             }
         }
 
-        void RespondToDiscard(string[] moveTokens)
+        void RespondToDiscard(int playerIndex, string[] moveTokens)
         {
-
+            if (playerIndex == this.PlayerIndex)
+            {
+                // The top card on the discard pile will be the one I just discarded.
+                for (int i = 0; i < 5; i++)
+                {
+                    Card discarded = _view.DiscardPile.Last();
+                    HandProbabilities[i].RemoveInstance(discarded.Color, discarded.Number);
+                }
+            }
         }
 
         void RespondToPlay(string[] moveTokens)

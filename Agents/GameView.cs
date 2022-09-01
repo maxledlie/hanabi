@@ -86,6 +86,8 @@ namespace Agents
         public int NumPlayers => _game.NumPlayers;
         public int NumTokens => _game.NumTokens;
         public int NumLives => _game.NumLives;
+        public List<Card> DiscardPile => _game.DiscardPile;
+
         public List<List<Card>> OtherHands
         {
             get

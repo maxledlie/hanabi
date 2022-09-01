@@ -63,6 +63,12 @@ namespace Agents
             }
         }
 
+        public void RemoveInstance(Color color, int number)
+        {
+            if (_numLeftByType[(color, number)] > 0)
+                _numLeftByType[(color, number)]--;
+        }
+
         int NumLeftTotal() => _numLeftByType.Values.Sum();
     }
 }
