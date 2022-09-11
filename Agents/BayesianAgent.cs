@@ -103,7 +103,7 @@ namespace Agents
                     RespondToDiscard(playerIndex, moveTokens);
                     return;
                 case "play":
-                    RespondToPlay(moveTokens);
+                    RespondToPlay(playerIndex, moveTokens);
                     return;
             }
         }
@@ -150,8 +150,6 @@ namespace Agents
 
         void RespondToDiscard(int playerIndex, string[] moveTokens)
         {
-            int handPosition = int.Parse(moveTokens[1]);
-
             if (playerIndex == this.PlayerIndex)
             {
                 // The top card on the discard pile will be the one I just discarded.
@@ -176,9 +174,19 @@ namespace Agents
             }
         }
 
-        void RespondToPlay(string[] moveTokens)
+        void RespondToPlay(int playerIndex, string[] moveTokens)
         {
+            var playInfo = _view.LastMoveInfo as PlayCardInfo;
+            if (playInfo == null)
+                throw new Exception("playInfo was unexpectedly null");
 
+            if (playerIndex == this.PlayerIndex)
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    HandProbabilities[i].RemoveInstance(playInfo.CardColor, playInfo.CardNumber);
+                }
+            }
         }
     }
 }

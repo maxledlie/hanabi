@@ -141,5 +141,31 @@ namespace AgentTests
                 Assert.That(probs[i].Get(Color.Red, 4), Is.EqualTo(1.0 / 39)); 
             }
         }
+
+        [Test]
+        public void HandProbabilities_AfterOwnPlay_ReflectsNewKnowledge()
+        {
+            var game = new Game(3, GameTests.TestDeck());
+            var view = new GameView(0, game);
+            var agent = new BayesianAgent(0, view);
+
+            game.RegisterAgent(0, agent);
+
+            game.PlayCard(0);
+
+            var probs = agent.HandProbabilities;
+
+            // Our agent has played a card and seen that it was a Red 1.
+            // The probability of other cards in their hand being Red 1 should have decreased,
+            // and the probability of them being any other card slightly increased.
+            for (int i = 0; i < 5; i++)
+            {
+                Assert.That(probs[i].Get(Color.Red, 1), Is.EqualTo(1.0 / 39));
+                Assert.That(probs[i].Get(Color.Red, 2), Is.EqualTo(2.0 / 39));
+                Assert.That(probs[i].Get(Color.Red, 3), Is.EqualTo(2.0 / 39));
+                Assert.That(probs[i].Get(Color.Red, 4), Is.EqualTo(1.0 / 39));
+                Assert.That(probs[i].Get(Color.Red, 5), Is.Zero);
+            }
+        }
     }
 }

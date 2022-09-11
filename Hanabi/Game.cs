@@ -18,6 +18,13 @@
         public Dictionary<Color, int> Stacks { get; set; }
         public List<Card> DiscardPile { get; internal set; } = new List<Card>();
 
+        /// <summary>
+        /// Information about the last move that took place and its consequences.
+        /// Useful for agents to update their probabilities after a move.
+        /// This must be cast to the appropriate MoveInfo subclass depending on the type of move that was made.
+        /// </summary>
+        public MoveInfo? LastMoveInfo { get; private set; }
+
         public Game(int numPlayers, Deck deck, int numStartingLives = 3)
         {
             Deck = deck;
@@ -147,6 +154,14 @@
 
                 if (playedCard.Number == 5 && NumTokens < MAX_TOKENS)
                     NumTokens++;
+
+                LastMoveInfo = new PlayCardInfo
+                {
+                    PlayerIndex = CurrentPlayer,
+                    CardColor = playedCard.Color,
+                    CardNumber = playedCard.Number,
+                    Successful = true
+                };
             } else
             {
                 // Card cannot be played: discard it and lose a life
@@ -154,6 +169,14 @@
                 NumLives--;
                 if (NumLives == 0)
                     IsOver = true;
+
+                LastMoveInfo = new PlayCardInfo
+                {
+                    PlayerIndex = CurrentPlayer,
+                    CardColor = playedCard.Color,
+                    CardNumber = playedCard.Number,
+                    Successful = false
+                };
             }
 
             PlayerHands[CurrentPlayer].RemoveAt(positionInHand);
@@ -162,6 +185,11 @@
 
             if (nextCard != null)
                 PlayerHands[CurrentPlayer].Add(nextCard);
+
+            foreach (var agent in _players.Values)
+            {
+                agent.RespondToMove($"Player {CurrentPlayer}: play {positionInHand}");
+            }
 
             EndTurn();
         }
