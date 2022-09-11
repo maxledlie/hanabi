@@ -150,13 +150,28 @@ namespace Agents
 
         void RespondToDiscard(int playerIndex, string[] moveTokens)
         {
+            int handPosition = int.Parse(moveTokens[1]);
+
             if (playerIndex == this.PlayerIndex)
             {
                 // The top card on the discard pile will be the one I just discarded.
+                Card discarded = _view.DiscardPile.Last();
                 for (int i = 0; i < 5; i++)
                 {
-                    Card discarded = _view.DiscardPile.Last();
                     HandProbabilities[i].RemoveInstance(discarded.Color, discarded.Number);
+                }
+            } else
+            {
+                int otherPlayerIndex = playerIndex > this.PlayerIndex ? playerIndex - 1 : playerIndex;
+
+                // Make a note of the discarding player's replacement card if they got one
+                if (_view.OtherHands[otherPlayerIndex].Count == 5)
+                {
+                    Card replacementCard = _view.OtherHands[otherPlayerIndex][4];
+                    for (int i = 0; i < 5; i++)
+                    {
+                        HandProbabilities[i].RemoveInstance(replacementCard.Color, replacementCard.Number);
+                    }
                 }
             }
         }
