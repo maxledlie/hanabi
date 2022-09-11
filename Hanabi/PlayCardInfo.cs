@@ -1,5 +1,8 @@
 ﻿namespace Hanabi
 {
+    /// <summary>
+    /// Contains information visible to ALL players after a card is played
+    /// </summary>
     public class PlayCardInfo : MoveInfo
     {
         public int PlayerIndex { get; set; }

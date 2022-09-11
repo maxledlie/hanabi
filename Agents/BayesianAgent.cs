@@ -103,7 +103,7 @@ namespace Agents
                     RespondToDiscard(playerIndex, moveTokens);
                     return;
                 case "play":
-                    RespondToPlay(playerIndex, moveTokens);
+                    RespondToPlay(playerIndex);
                     return;
             }
         }
@@ -174,7 +174,7 @@ namespace Agents
             }
         }
 
-        void RespondToPlay(int playerIndex, string[] moveTokens)
+        void RespondToPlay(int playerIndex)
         {
             var playInfo = _view.LastMoveInfo as PlayCardInfo;
             if (playInfo == null)
@@ -185,6 +185,19 @@ namespace Agents
                 for (int i = 0; i < 5; i++)
                 {
                     HandProbabilities[i].RemoveInstance(playInfo.CardColor, playInfo.CardNumber);
+                }
+            } else
+            {
+                int otherPlayerIndex = playerIndex > this.PlayerIndex ? playerIndex - 1 : playerIndex;
+
+                // Make a note of the playing player's replacement card if they got one
+                if (_view.OtherHands[otherPlayerIndex].Count == 5)
+                {
+                    Card replacementCard = _view.OtherHands[otherPlayerIndex][4];
+                    for (int i = 0; i < 5; i++)
+                    {
+                        HandProbabilities[i].RemoveInstance(replacementCard.Color, replacementCard.Number);
+                    }
                 }
             }
         }
