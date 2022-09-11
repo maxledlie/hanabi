@@ -2,6 +2,6 @@
 {
     public interface IAgent
     {
-        void RespondToMove(string move);
+        void RespondToMove(MoveInfo moveInfo);
     }
 }

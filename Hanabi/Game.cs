@@ -73,9 +73,16 @@
             if (nextCard != null)
                 PlayerHands[CurrentPlayer].Add(nextCard);
 
+            var moveInfo = new DiscardInfo
+            {
+                PlayerIndex = CurrentPlayer,
+                CardColor = discardedCard.Color,
+                CardNumber = discardedCard.Number
+            };
+
             foreach (var agent in _players.Values)
             {
-                agent.RespondToMove($"Player {CurrentPlayer}: discard {positionInHand}");
+                agent.RespondToMove(moveInfo);
             }
 
             EndTurn();
@@ -93,17 +100,19 @@
                 throw new RuleViolationException("You can only tell a player about a color if they are " +
                     "holding at least one card of that color");
 
-            var handPositionsString = Enumerable.Range(0, 5)
-                .Where(i => PlayerHands[player][i].Color == color)
-                .Select(i => i.ToString())
-                .Aggregate("", (current, next) => current + " " + next);
-
             NumTokens--;
+
+            var moveInfo = new TellColorInfo
+            {
+                PlayerIndex = CurrentPlayer,
+                RecipientIndex = player,
+                Color = color,
+                HandPositions = Enumerable.Range(0, 5).Where(i => PlayerHands[player][i].Color == color).ToList()
+            };
 
             foreach (var agent in _players.Values)
             {
-                agent.RespondToMove($"Player {CurrentPlayer}: tell player {player} about color " +
-                    $"{color.ToString().ToLower()}: {handPositionsString}");
+                agent.RespondToMove(moveInfo);
             }
             EndTurn();
         }
@@ -127,10 +136,17 @@
 
             NumTokens--;
 
+            var moveInfo = new TellNumberInfo
+            {
+                PlayerIndex = CurrentPlayer,
+                RecipientIndex = player,
+                Number = number,
+                HandPositions = Enumerable.Range(0, 5).Where(i => PlayerHands[player][i].Number == number).ToList()
+            };
+
             foreach (var agent in _players.Values)
             {
-                agent.RespondToMove($"Player {CurrentPlayer}: tell player {player} about number " +
-                    $"{number}: {handPositionsString}");
+                agent.RespondToMove(moveInfo);
             }
             EndTurn();
         }
@@ -154,14 +170,6 @@
 
                 if (playedCard.Number == 5 && NumTokens < MAX_TOKENS)
                     NumTokens++;
-
-                LastMoveInfo = new PlayCardInfo
-                {
-                    PlayerIndex = CurrentPlayer,
-                    CardColor = playedCard.Color,
-                    CardNumber = playedCard.Number,
-                    Successful = true
-                };
             } else
             {
                 // Card cannot be played: discard it and lose a life
@@ -169,14 +177,6 @@
                 NumLives--;
                 if (NumLives == 0)
                     IsOver = true;
-
-                LastMoveInfo = new PlayCardInfo
-                {
-                    PlayerIndex = CurrentPlayer,
-                    CardColor = playedCard.Color,
-                    CardNumber = playedCard.Number,
-                    Successful = false
-                };
             }
 
             PlayerHands[CurrentPlayer].RemoveAt(positionInHand);
@@ -186,9 +186,16 @@
             if (nextCard != null)
                 PlayerHands[CurrentPlayer].Add(nextCard);
 
+            var moveInfo = new PlayCardInfo
+            {
+                PlayerIndex = CurrentPlayer,
+                CardColor = playedCard.Color,
+                CardNumber = playedCard.Number,
+            };
+
             foreach (var agent in _players.Values)
             {
-                agent.RespondToMove($"Player {CurrentPlayer}: play {positionInHand}");
+                agent.RespondToMove(moveInfo);
             }
 
             EndTurn();

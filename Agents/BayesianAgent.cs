@@ -84,73 +84,63 @@ namespace Agents
                     pair => Deck.NumInstances(pair.Key.Item2) - pair.Value))).ToList();
         }
 
-        public void RespondToMove(string move)
+        public void RespondToMove(MoveInfo moveInfo)
         {
-            string[] parts = move.Split(':', StringSplitOptions.RemoveEmptyEntries);
-            string playerName = parts[0];
-            int playerIndex = int.Parse(playerName.Split()[1]);
-            string moveDescription = parts[1];
-            string handPositions = parts.Length > 2 ? parts[2] : "";
-
-            string[] moveTokens = moveDescription.Split(new char[0], StringSplitOptions.RemoveEmptyEntries);
-
-            switch (moveTokens[0])
+            switch (moveInfo)
             {
-                case "tell":
-                    RespondToTell(moveTokens, handPositions);
+                case TellColorInfo tellColorInfo:
+                    RespondToTellColor(tellColorInfo);
                     return;
-                case "discard":
-                    RespondToDiscard(playerIndex, moveTokens);
+                case TellNumberInfo tellNumberInfo:
+                    RespondToTellNumber(tellNumberInfo);
                     return;
-                case "play":
-                    RespondToPlay(playerIndex);
+                case DiscardInfo discardInfo:
+                    RespondToDiscard(discardInfo);
+                    return;
+                case PlayCardInfo playInfo:
+                    RespondToPlay(playInfo);
                     return;
             }
         }
 
-        void RespondToTell(string[] moveTokens, string handPositionsStr)
+        void RespondToTellNumber(TellNumberInfo info)
         {
-            int recipientIndex = int.Parse(moveTokens[2]);
-            if (recipientIndex != this.PlayerIndex)
+            if (info.RecipientIndex != this.PlayerIndex)
                 return;
 
-            var handPositions = handPositionsStr
-                .Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries)
-                .Select(s => int.Parse(s));
-
-            if (moveTokens[4] == "color")
+            for (int i = 0; i < 5; i++)
             {
-                Color color = Enum.Parse<Color>(moveTokens[5], ignoreCase: true);
-                for (int i = 0; i < 5; i++)
+                if (info.HandPositions.Contains(i))
                 {
-                    if (handPositions.Contains(i))
-                    {
-                        HandProbabilities[i].ColorIs(color);
-                    } else
-                    {
-                        HandProbabilities[i].ColorIsNot(color);
-                    }
-                }
-
-            } else if (moveTokens[4] == "number")
-            {
-                int number = int.Parse(moveTokens[5]);
-                for (int i = 0; i < 5; i++)
+                    HandProbabilities[i].NumberIs(info.Number);
+                } else
                 {
-                    if (handPositions.Contains(i))
-                    {
-                        HandProbabilities[i].NumberIs(number);
-                    } else
-                    {
-                        HandProbabilities[i].NumberIsNot(number);
-                    }
+                    HandProbabilities[i].NumberIsNot(info.Number);
                 }
             }
         }
 
-        void RespondToDiscard(int playerIndex, string[] moveTokens)
+        void RespondToTellColor(TellColorInfo info)
         {
-            if (playerIndex == this.PlayerIndex)
+            if (info.RecipientIndex != this.PlayerIndex)
+                return;
+
+            for (int i = 0; i < 5; i++)
+            {
+                if (info.HandPositions.Contains(i))
+                {
+                    HandProbabilities[i].ColorIs(info.Color);
+                }
+                else
+                {
+                    HandProbabilities[i].ColorIsNot(info.Color);
+                }
+            }
+        }
+
+        void RespondToDiscard(DiscardInfo info)
+        {
+            if (info.PlayerIndex == this.PlayerIndex)
             {
                 // The top card on the discard pile will be the one I just discarded.
                 Card discarded = _view.DiscardPile.Last();
@@ -160,7 +150,7 @@ namespace Agents
                 }
             } else
             {
-                int otherPlayerIndex = playerIndex > this.PlayerIndex ? playerIndex - 1 : playerIndex;
+                int otherPlayerIndex = info.PlayerIndex > this.PlayerIndex ? info.PlayerIndex - 1 : info.PlayerIndex;
 
                 // Make a note of the discarding player's replacement card if they got one
                 if (_view.OtherHands[otherPlayerIndex].Count == 5)
@@ -174,21 +164,17 @@ namespace Agents
             }
         }
 
-        void RespondToPlay(int playerIndex)
+        void RespondToPlay(PlayCardInfo info)
         {
-            var playInfo = _view.LastMoveInfo as PlayCardInfo;
-            if (playInfo == null)
-                throw new Exception("playInfo was unexpectedly null");
-
-            if (playerIndex == this.PlayerIndex)
+            if (info.PlayerIndex == this.PlayerIndex)
             {
                 for (int i = 0; i < 5; i++)
                 {
-                    HandProbabilities[i].RemoveInstance(playInfo.CardColor, playInfo.CardNumber);
+                    HandProbabilities[i].RemoveInstance(info.CardColor, info.CardNumber);
                 }
             } else
             {
-                int otherPlayerIndex = playerIndex > this.PlayerIndex ? playerIndex - 1 : playerIndex;
+                int otherPlayerIndex = info.PlayerIndex > this.PlayerIndex ? info.PlayerIndex - 1 : info.PlayerIndex;
 
                 // Make a note of the playing player's replacement card if they got one
                 if (_view.OtherHands[otherPlayerIndex].Count == 5)

@@ -1,9 +1,6 @@
 ﻿namespace Hanabi
 {
-    /// <summary>
-    /// Contains information visible to ALL players after a card is played
-    /// </summary>
-    public class PlayCardInfo : MoveInfo
+    public class DiscardInfo : MoveInfo
     {
         public int PlayerIndex { get; set; }
         public Color CardColor { get; set; }
