@@ -113,5 +113,89 @@ namespace AgentTests
                 Assert.That(probs[i].Get(Color.Red, 5), Is.Zero);
             }
         }
+
+        [Test]
+        public void HandProbabilities_AfterTeammateDiscard_ReflectsNewKnowledge()
+        {
+            var game = new Game(3, GameTests.TestDeck());
+            var view = new GameView(0, game);
+            var agent = new BayesianAgent(0, view);
+
+            game.RegisterAgent(0, agent);
+
+            game.TellNumber(1, 4); // Tell Player 1 about their number 4 just to skip our turn
+            game.Discard(2); // Player 1 discards their 4, and it is replaced with the White 1 from the top of the deck.
+
+            var probs = agent.HandProbabilities;
+
+            // Our agent should recognise that Player 1 now has a White 1. Their probability of any card in their hand being
+            // a White 1 should be reduced, and the probability of them being any other card slightly increased.
+            for (int i = 0; i < 5; i++)
+            {
+                Assert.That(probs[i].Get(Color.White, 1), Is.EqualTo(2.0 / 39));
+                Assert.That(probs[i].Get(Color.White, 2), Is.EqualTo(1.0 / 39));
+                Assert.That(probs[i].Get(Color.White, 3), Is.EqualTo(2.0 / 39));
+                Assert.That(probs[i].Get(Color.White, 4), Is.EqualTo(1.0 / 39));
+                Assert.That(probs[i].Get(Color.White, 5), Is.Zero);
+
+                // They should remember that they saw a Red 4, even though it's now in the discard pile.
+                Assert.That(probs[i].Get(Color.Red, 4), Is.EqualTo(1.0 / 39)); 
+            }
+        }
+
+        [Test]
+        public void HandProbabilities_AfterOwnPlay_ReflectsNewKnowledge()
+        {
+            var game = new Game(3, GameTests.TestDeck());
+            var view = new GameView(0, game);
+            var agent = new BayesianAgent(0, view);
+
+            game.RegisterAgent(0, agent);
+
+            game.PlayCard(0);
+
+            var probs = agent.HandProbabilities;
+
+            // Our agent has played a card and seen that it was a Red 1.
+            // The probability of other cards in their hand being Red 1 should have decreased,
+            // and the probability of them being any other card slightly increased.
+            for (int i = 0; i < 5; i++)
+            {
+                Assert.That(probs[i].Get(Color.Red, 1), Is.EqualTo(1.0 / 39));
+                Assert.That(probs[i].Get(Color.Red, 2), Is.EqualTo(2.0 / 39));
+                Assert.That(probs[i].Get(Color.Red, 3), Is.EqualTo(2.0 / 39));
+                Assert.That(probs[i].Get(Color.Red, 4), Is.EqualTo(1.0 / 39));
+                Assert.That(probs[i].Get(Color.Red, 5), Is.Zero);
+            }
+        }
+
+        [Test]
+        public void HandProbabilities_AfterTeammatePlay_ReflectsNewKnowledge()
+        {
+            var game = new Game(3, GameTests.TestDeck());
+            var view = new GameView(0, game);
+            var agent = new BayesianAgent(0, view);
+
+            game.RegisterAgent(0, agent);
+
+            game.TellNumber(1, 4); // Tell Player 1 about their number 4 just to skip our turn
+            game.PlayCard(2); // Player 1 plays their 4 (losing a life), and it is replaced with the White 1 from the top of the deck.
+
+            var probs = agent.HandProbabilities;
+
+            // Our agent should recognise that Player 1 now has a White 1. Their probability of any card in their hand being
+            // a White 1 should be reduced, and the probability of them being any other card slightly increased.
+            for (int i = 0; i < 5; i++)
+            {
+                Assert.That(probs[i].Get(Color.White, 1), Is.EqualTo(2.0 / 39));
+                Assert.That(probs[i].Get(Color.White, 2), Is.EqualTo(1.0 / 39));
+                Assert.That(probs[i].Get(Color.White, 3), Is.EqualTo(2.0 / 39));
+                Assert.That(probs[i].Get(Color.White, 4), Is.EqualTo(1.0 / 39));
+                Assert.That(probs[i].Get(Color.White, 5), Is.Zero);
+
+                // They should remember that they saw a Red 4, even though it's now in the discard pile.
+                Assert.That(probs[i].Get(Color.Red, 4), Is.EqualTo(1.0 / 39));
+            }
+        }
     }
 }

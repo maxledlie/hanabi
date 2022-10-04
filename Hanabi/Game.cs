@@ -18,6 +18,13 @@
         public Dictionary<Color, int> Stacks { get; set; }
         public List<Card> DiscardPile { get; internal set; } = new List<Card>();
 
+        /// <summary>
+        /// Information about the last move that took place and its consequences.
+        /// Useful for agents to update their probabilities after a move.
+        /// This must be cast to the appropriate MoveInfo subclass depending on the type of move that was made.
+        /// </summary>
+        public MoveInfo? LastMoveInfo { get; private set; }
+
         public Game(int numPlayers, Deck deck, int numStartingLives = 3)
         {
             Deck = deck;
@@ -66,9 +73,16 @@
             if (nextCard != null)
                 PlayerHands[CurrentPlayer].Add(nextCard);
 
+            var moveInfo = new DiscardInfo
+            {
+                PlayerIndex = CurrentPlayer,
+                CardColor = discardedCard.Color,
+                CardNumber = discardedCard.Number
+            };
+
             foreach (var agent in _players.Values)
             {
-                agent.RespondToMove($"Player {CurrentPlayer}: discard {positionInHand}");
+                agent.RespondToMove(moveInfo);
             }
 
             EndTurn();
@@ -86,17 +100,19 @@
                 throw new RuleViolationException("You can only tell a player about a color if they are " +
                     "holding at least one card of that color");
 
-            var handPositionsString = Enumerable.Range(0, 5)
-                .Where(i => PlayerHands[player][i].Color == color)
-                .Select(i => i.ToString())
-                .Aggregate("", (current, next) => current + " " + next);
-
             NumTokens--;
+
+            var moveInfo = new TellColorInfo
+            {
+                PlayerIndex = CurrentPlayer,
+                RecipientIndex = player,
+                Color = color,
+                HandPositions = Enumerable.Range(0, 5).Where(i => PlayerHands[player][i].Color == color).ToList()
+            };
 
             foreach (var agent in _players.Values)
             {
-                agent.RespondToMove($"Player {CurrentPlayer}: tell player {player} about color " +
-                    $"{color.ToString().ToLower()}: {handPositionsString}");
+                agent.RespondToMove(moveInfo);
             }
             EndTurn();
         }
@@ -120,10 +136,17 @@
 
             NumTokens--;
 
+            var moveInfo = new TellNumberInfo
+            {
+                PlayerIndex = CurrentPlayer,
+                RecipientIndex = player,
+                Number = number,
+                HandPositions = Enumerable.Range(0, 5).Where(i => PlayerHands[player][i].Number == number).ToList()
+            };
+
             foreach (var agent in _players.Values)
             {
-                agent.RespondToMove($"Player {CurrentPlayer}: tell player {player} about number " +
-                    $"{number}: {handPositionsString}");
+                agent.RespondToMove(moveInfo);
             }
             EndTurn();
         }
@@ -162,6 +185,18 @@
 
             if (nextCard != null)
                 PlayerHands[CurrentPlayer].Add(nextCard);
+
+            var moveInfo = new PlayCardInfo
+            {
+                PlayerIndex = CurrentPlayer,
+                CardColor = playedCard.Color,
+                CardNumber = playedCard.Number,
+            };
+
+            foreach (var agent in _players.Values)
+            {
+                agent.RespondToMove(moveInfo);
+            }
 
             EndTurn();
         }
