@@ -2,11 +2,11 @@
 
 namespace Agents
 {
-    public class ProbabilityDistribution
+    public class OptionTracker
     {
         Dictionary<(Color, int), int> _numLeftByType = new Dictionary<(Color, int), int>();
 
-        public ProbabilityDistribution(Dictionary<(Color, int), int> numLeftByType)
+        public OptionTracker(Dictionary<(Color, int), int> numLeftByType)
         {
             _numLeftByType = numLeftByType;
         }

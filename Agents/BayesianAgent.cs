@@ -24,7 +24,7 @@ namespace Agents
         /// Represents the agent's current knowledge of the probability distributions of the cards
         /// in its own hand.
         /// </summary>
-        public List<ProbabilityDistribution> HandProbabilities { get; } = new List<ProbabilityDistribution>();
+        public List<OptionTracker> HandProbabilities { get; } = new List<OptionTracker>();
 
         public BayesianAgent(int playerIndex, GameView gameAdapter)
         {
@@ -60,7 +60,7 @@ namespace Agents
             }
         }
 
-        private List<ProbabilityDistribution> InitialProbabilities()
+        private List<OptionTracker> InitialProbabilities()
         {
             var cardCounts = new Dictionary<(Color, int), int>();
             foreach (Color color in Enum.GetValues(typeof(Color)))
@@ -78,7 +78,7 @@ namespace Agents
                 }
             }
 
-            return Enumerable.Range(0, 5).Select(i => new ProbabilityDistribution(
+            return Enumerable.Range(0, 5).Select(i => new OptionTracker(
                 cardCounts.ToDictionary(
                     pair => pair.Key,
                     pair => Deck.NumInstances(pair.Key.Item2) - pair.Value))).ToList();

@@ -2,6 +2,7 @@ using Agents;
 using Hanabi;
 using HanabiTests;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 
 namespace AgentTests
@@ -42,7 +43,7 @@ namespace AgentTests
             // There are 50 cards in total, so by default, each card has a (numInstances / 50) chance of
             // being any specific (color, number) pair. However, at the start of the game we can already
             // adjust our probabilities based on our teammates hands.
-            List<ProbabilityDistribution> probs = agent.HandProbabilities;
+            List<OptionTracker> probs = agent.HandProbabilities;
 
             for (int i = 0; i < 5; i++)
             {
