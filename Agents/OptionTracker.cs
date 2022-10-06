@@ -70,5 +70,16 @@ namespace Agents
         }
 
         int NumLeftTotal() => _numLeftByType.Values.Sum();
+
+        public Dictionary<(Color, int), double> GetProbabilities()
+        {
+            int numLeftTotal = _numLeftByType.Values.Sum();
+            return _numLeftByType.ToDictionary(kv => kv.Key, kv => (double) kv.Value / numLeftTotal);
+        }
+
+        public OptionTracker Clone()
+        {
+            return new OptionTracker(new Dictionary<(Color, int), int>(_numLeftByType));
+        }
     }
 }

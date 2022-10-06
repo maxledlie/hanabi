@@ -44,7 +44,7 @@ namespace Agents
             return playOptions.Concat(discardOptions).Concat(tellOptions);
         }
 
-        public Game TestMove(string move)
+        public Game TestMove(string move, IEnumerable<(Color, int)> hand)
         {
             Game gameClone = _game.Clone();
 

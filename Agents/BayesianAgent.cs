@@ -5,6 +5,8 @@ namespace Agents
     public class BayesianAgent : IAgent
     {
         GameView _view;
+        const int _numMonteCarloSamples = 1000;
+        const int _evaluationDepth = 0;
 
         public int PlayerIndex { get; private set; }
 
@@ -24,14 +26,14 @@ namespace Agents
         /// Represents the agent's current knowledge of the probability distributions of the cards
         /// in its own hand.
         /// </summary>
-        public List<OptionTracker> HandProbabilities { get; } = new List<OptionTracker>();
+        public List<OptionTracker> HandOptions { get; } = new List<OptionTracker>();
 
         public BayesianAgent(int playerIndex, GameView gameAdapter)
         {
             PlayerIndex = playerIndex;
             _view = gameAdapter;
 
-            HandProbabilities = InitialProbabilities();
+            HandOptions = InitialOptions();
         }
 
         public double Evaluate(Game game, int depth)
@@ -52,15 +54,53 @@ namespace Agents
 
         public void TakeTurn()
         {
-            var availableMoves = _view.AvailableMoves();
+            IEnumerable<string> availableMoves = _view.AvailableMoves();
 
-            foreach (var move in availableMoves)
+            string? bestMove = availableMoves.MaxBy(move =>
             {
-                Game gameAfterMove = _view.TestMove(move);
-            }
+                // Generate a random hand from the individual probability distributions
+                IList<IList<(Color, int)>> hands = DrawFromOptions(HandOptions, _numMonteCarloSamples);
+
+                double totalScore = hands.Sum(hand =>
+                {
+                    Game resultingState = _view.TestMove(move, hand);
+                    return Evaluate(resultingState, _evaluationDepth);
+                });
+
+                double expectedScore = totalScore / _numMonteCarloSamples;
+                return expectedScore;
+            });
         }
 
-        private List<OptionTracker> InitialProbabilities()
+        /// <summary>
+        /// Given the possible cards left in each hand position, randomly generates a hand from this distribution.
+        /// The distributions for each hand position are not independent: drawing a card from e.g. position 1 removes
+        /// it as an option from all subsequent hand positions.
+        /// </summary>
+        private IList<IList<(Color, int)>> DrawFromOptions(IList<OptionTracker> options, int numDraws)
+        {
+            var hands = new List<IList<(Color, int)>>();
+            for (int i = 0; i < numDraws; i++)
+            {
+                var drawnHand = new List<(Color, int)>();
+                for (int iPos = 0; iPos < options.Count(); iPos++)
+                {
+                    var opts = options[iPos].Clone();
+                    foreach ((Color color, int number) in drawnHand)
+                        opts.RemoveInstance(color, number);
+
+                    Dictionary<(Color, int), double> probabilities = opts.GetProbabilities();
+                    var dist = new DiscreteProbabilityDistribution<(Color, int)>(probabilities);
+                    drawnHand.Add(dist.GetNext());
+                }
+
+                hands.Add(drawnHand);
+            }
+
+            return hands;
+        }
+
+        private List<OptionTracker> InitialOptions()
         {
             var cardCounts = new Dictionary<(Color, int), int>();
             foreach (Color color in Enum.GetValues(typeof(Color)))
@@ -112,10 +152,10 @@ namespace Agents
             {
                 if (info.HandPositions.Contains(i))
                 {
-                    HandProbabilities[i].NumberIs(info.Number);
+                    HandOptions[i].NumberIs(info.Number);
                 } else
                 {
-                    HandProbabilities[i].NumberIsNot(info.Number);
+                    HandOptions[i].NumberIsNot(info.Number);
                 }
             }
         }
@@ -129,11 +169,11 @@ namespace Agents
             {
                 if (info.HandPositions.Contains(i))
                 {
-                    HandProbabilities[i].ColorIs(info.Color);
+                    HandOptions[i].ColorIs(info.Color);
                 }
                 else
                 {
-                    HandProbabilities[i].ColorIsNot(info.Color);
+                    HandOptions[i].ColorIsNot(info.Color);
                 }
             }
         }
@@ -146,7 +186,7 @@ namespace Agents
                 Card discarded = _view.DiscardPile.Last();
                 for (int i = 0; i < 5; i++)
                 {
-                    HandProbabilities[i].RemoveInstance(discarded.Color, discarded.Number);
+                    HandOptions[i].RemoveInstance(discarded.Color, discarded.Number);
                 }
             } else
             {
@@ -158,7 +198,7 @@ namespace Agents
                     Card replacementCard = _view.OtherHands[otherPlayerIndex][4];
                     for (int i = 0; i < 5; i++)
                     {
-                        HandProbabilities[i].RemoveInstance(replacementCard.Color, replacementCard.Number);
+                        HandOptions[i].RemoveInstance(replacementCard.Color, replacementCard.Number);
                     }
                 }
             }
@@ -170,7 +210,7 @@ namespace Agents
             {
                 for (int i = 0; i < 5; i++)
                 {
-                    HandProbabilities[i].RemoveInstance(info.CardColor, info.CardNumber);
+                    HandOptions[i].RemoveInstance(info.CardColor, info.CardNumber);
                 }
             } else
             {
@@ -182,7 +222,7 @@ namespace Agents
                     Card replacementCard = _view.OtherHands[otherPlayerIndex][4];
                     for (int i = 0; i < 5; i++)
                     {
-                        HandProbabilities[i].RemoveInstance(replacementCard.Color, replacementCard.Number);
+                        HandOptions[i].RemoveInstance(replacementCard.Color, replacementCard.Number);
                     }
                 }
             }
