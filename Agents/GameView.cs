@@ -75,7 +75,7 @@ namespace Agents
 
             if (tokens[0] == "tell")
             {
-                _game = ApplyTell(_game, tokens);
+                Tell(tokens);
                 return;
             }
 
@@ -112,6 +112,22 @@ namespace Agents
                 int number = int.Parse(moveTokens[5]);
                 gameClone.TellNumber(playerIndex, number, informAgents);
                 return gameClone;
+            }
+        }
+
+        void Tell(string[] moveTokens)
+        {
+            int playerIndex = int.Parse(moveTokens[2]);
+
+            if (moveTokens[4] == "color")
+            {
+                Color color = Enum.Parse<Color>(moveTokens[5], ignoreCase: true);
+                _game.TellColor(playerIndex, color);
+            }
+            else
+            {
+                int number = int.Parse(moveTokens[5]);
+                _game.TellNumber(playerIndex, number);
             }
         }
 

@@ -26,32 +26,36 @@
         /// </summary>
         public MoveInfo? LastMoveInfo { get; private set; }
 
-        public Game(int numPlayers, Deck deck, int numStartingLives = 3)
+        public Game(int numPlayers, Deck deck, int numStartingLives = 3, bool doSetup = true)
         {
             Deck = deck;
             NumLives = numStartingLives;
             NumPlayers = numPlayers;
 
             CardsPerPlayer = numPlayers > 3 ? 4 : 5;
+            Stacks = new Dictionary<Color, int>();
 
-            for (int i = 0; i < numPlayers; i++)
+            if (doSetup)
             {
-                var hand = new List<Card>();
-                for (int j = 0; j < CardsPerPlayer; j++)
+                for (int i = 0; i < numPlayers; i++)
                 {
-                    Card? card = deck.DrawCard();
-                    if (card != null)
-                        hand.Add(card);
+                    var hand = new List<Card>();
+                    for (int j = 0; j < CardsPerPlayer; j++)
+                    {
+                        Card? card = deck.DrawCard();
+                        if (card != null)
+                            hand.Add(card);
+                    }
+
+                    PlayerHands.Add(hand);
                 }
 
-                PlayerHands.Add(hand);
-            }
-
-            // Initialise stacks
-            Stacks = new Dictionary<Color, int>();
-            foreach (var color in Enum.GetValues(typeof(Color)))
-            {
-                Stacks[(Color) color] = 0;
+                // Initialise stacks
+                Stacks = new Dictionary<Color, int>();
+                foreach (var color in Enum.GetValues(typeof(Color)))
+                {
+                    Stacks[(Color)color] = 0;
+                }
             }
         }
 
@@ -237,13 +241,21 @@
         {
             if (Deck.Clone() is not Deck deck) throw new Exception("Cloning deck failed");
 
-            return new Game(NumPlayers, deck)
+            var clonedPlayerHands = new List<List<Card>>();
+            foreach (List<Card> hand in PlayerHands)
             {
-                NumTokens = NumTokens,
+                clonedPlayerHands.Add(new List<Card>(hand));
+            }
+
+            return new Game(NumPlayers, deck, doSetup: false)
+            {
                 NumLives = NumLives,
+                NumTokens = NumTokens,
                 CurrentPlayer = CurrentPlayer,
+                PlayerHands = clonedPlayerHands,
                 _playerWhoDrewLastCard = _playerWhoDrewLastCard,
                 _isLastRound = _isLastRound,
+                _players = new Dictionary<int, IAgent>(_players),
                 Stacks = new Dictionary<Color, int>(Stacks),
                 DiscardPile = new List<Card>(DiscardPile)
             };
