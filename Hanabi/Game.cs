@@ -13,7 +13,8 @@
         public int NumTokens { get; internal set; } = MAX_TOKENS;
         public int CurrentPlayer { get; internal set; } = 0;
         public List<List<Card>> PlayerHands { get; internal set; } = new List<List<Card>>();
-        public Deck Deck { get; }
+        public int CardsPerPlayer { get; }
+        public Deck Deck { get; set;  }
         public bool IsOver { get; internal set; }
         public Dictionary<Color, int> Stacks { get; set; }
         public List<Card> DiscardPile { get; internal set; } = new List<Card>();
@@ -31,12 +32,12 @@
             NumLives = numStartingLives;
             NumPlayers = numPlayers;
 
-            int cardsPerPlayer = numPlayers > 3 ? 4 : 5;
+            CardsPerPlayer = numPlayers > 3 ? 4 : 5;
 
             for (int i = 0; i < numPlayers; i++)
             {
                 var hand = new List<Card>();
-                for (int j = 0; j < cardsPerPlayer; j++)
+                for (int j = 0; j < CardsPerPlayer; j++)
                 {
                     Card? card = deck.DrawCard();
                     if (card != null)
@@ -107,7 +108,7 @@
                 PlayerIndex = CurrentPlayer,
                 RecipientIndex = player,
                 Color = color,
-                HandPositions = Enumerable.Range(0, 5).Where(i => PlayerHands[player][i].Color == color).ToList()
+                HandPositions = Enumerable.Range(0, CardsPerPlayer).Where(i => PlayerHands[player][i].Color == color).ToList()
             };
 
             foreach (var agent in _players.Values)
@@ -129,7 +130,7 @@
                 throw new RuleViolationException("You can only tell a player about a number if they are " +
                     "holding at least one card of that number");
 
-            var handPositionsString = Enumerable.Range(0, 5)
+            var handPositionsString = Enumerable.Range(0, CardsPerPlayer)
                 .Where(i => PlayerHands[player][i].Number == number)
                 .Select(i => i.ToString())
                 .Aggregate("", (current, next) => current + " " + next);
@@ -141,7 +142,7 @@
                 PlayerIndex = CurrentPlayer,
                 RecipientIndex = player,
                 Number = number,
-                HandPositions = Enumerable.Range(0, 5).Where(i => PlayerHands[player][i].Number == number).ToList()
+                HandPositions = Enumerable.Range(0, CardsPerPlayer).Where(i => PlayerHands[player][i].Number == number).ToList()
             };
 
             foreach (var agent in _players.Values)

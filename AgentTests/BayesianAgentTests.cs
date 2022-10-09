@@ -43,7 +43,7 @@ namespace AgentTests
             // There are 50 cards in total, so by default, each card has a (numInstances / 50) chance of
             // being any specific (color, number) pair. However, at the start of the game we can already
             // adjust our probabilities based on our teammates hands.
-            List<OptionTracker> probs = agent.HandOptions;
+            List<OptionTracker> probs = agent.HandOptionTrackers;
 
             for (int i = 0; i < 5; i++)
             {
@@ -72,7 +72,7 @@ namespace AgentTests
             game.TellColor(1, Color.White); // Our agent tells player 1 something, just to progress the game
             game.TellColor(0, Color.Green); // Player 1 tells our agent about their green cards. This should update their knowledge.
 
-            var probs = agent.HandOptions;
+            var probs = agent.HandOptionTrackers;
 
             // We now know that our zeroth card is NOT green. Since we can see one green in our teammates hands,
             // this removes 9 possibilites, leaving us with 31
@@ -99,7 +99,7 @@ namespace AgentTests
 
             game.Discard(0);
 
-            var probs = agent.HandOptions;
+            var probs = agent.HandOptionTrackers;
 
             // Our agent has discarded a card and seen that it was a Red 1.
             // The probability of other cards in their hand being Red 1 should have decreased,
@@ -126,7 +126,7 @@ namespace AgentTests
             game.TellNumber(1, 4); // Tell Player 1 about their number 4 just to skip our turn
             game.Discard(2); // Player 1 discards their 4, and it is replaced with the White 1 from the top of the deck.
 
-            var probs = agent.HandOptions;
+            var probs = agent.HandOptionTrackers;
 
             // Our agent should recognise that Player 1 now has a White 1. Their probability of any card in their hand being
             // a White 1 should be reduced, and the probability of them being any other card slightly increased.
@@ -154,7 +154,7 @@ namespace AgentTests
 
             game.PlayCard(0);
 
-            var probs = agent.HandOptions;
+            var probs = agent.HandOptionTrackers;
 
             // Our agent has played a card and seen that it was a Red 1.
             // The probability of other cards in their hand being Red 1 should have decreased,
@@ -181,7 +181,7 @@ namespace AgentTests
             game.TellNumber(1, 4); // Tell Player 1 about their number 4 just to skip our turn
             game.PlayCard(2); // Player 1 plays their 4 (losing a life), and it is replaced with the White 1 from the top of the deck.
 
-            var probs = agent.HandOptions;
+            var probs = agent.HandOptionTrackers;
 
             // Our agent should recognise that Player 1 now has a White 1. Their probability of any card in their hand being
             // a White 1 should be reduced, and the probability of them being any other card slightly increased.

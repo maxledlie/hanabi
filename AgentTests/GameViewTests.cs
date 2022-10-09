@@ -56,5 +56,31 @@ namespace AgentTests
             Assert.That(availableMoves.Contains("play 3"));
             Assert.That(availableMoves.Contains("play 4"));
         }
+
+        [Test]
+        public void TestMove_ReturnsGameStateThatWouldResultFromProvidedTheory()
+        {
+            var game = new Game(2, GameTests.TestDeck()) { NumTokens = 1 };
+            var view = new GameView(0, game);
+
+            var hypotheticalHand = new List<Card>
+            {
+                new Card(Color.Red, 1),
+                new Card(Color.Green, 1),
+                new Card(Color.Blue, 1),
+                new Card(Color.Yellow, 1),
+                new Card(Color.White, 1)
+            };
+
+            var hypotheticalNextCard = new Card(Color.Green, 5);
+
+            var resultingState = view.TestMove("discard 0", hypotheticalHand, hypotheticalNextCard);
+
+            // The player should have gained a token from discarding
+            Assert.That(resultingState.NumTokens, Is.EqualTo(2));
+
+            // The player should have received the hypothetical next card (it goes to the end of their hand)
+            Assert.That(resultingState.PlayerHands[0].Last().Equals(new Card(Color.Green, 5)));
+        }
     }
 }

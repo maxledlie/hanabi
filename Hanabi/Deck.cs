@@ -7,7 +7,7 @@
 
         public int NumCardsRemaining => _cards.Count - _index;
 
-        internal Deck(List<Card> cards)
+        public Deck(List<Card> cards)
         {
             _cards = cards;
         }

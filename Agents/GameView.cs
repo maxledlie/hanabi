@@ -44,26 +44,58 @@ namespace Agents
             return playOptions.Concat(discardOptions).Concat(tellOptions);
         }
 
-        public Game TestMove(string move, IEnumerable<(Color, int)> hand)
+        /// <summary>
+        /// Returns the game state that would result if the hidden cards had the provided values and the player made the provided move
+        /// </summary>
+        public Game TestMove(string move, IEnumerable<Card> hypotheticalHand, Card hypotheticalNextCard)
         {
-            Game gameClone = _game.Clone();
+            Game hypotheticalGame = GameWithHypothesis(hypotheticalHand, hypotheticalNextCard);
 
             string[] tokens = move.Split();
 
             if (tokens[0] == "tell")
-                return ApplyTell(gameClone, tokens);
+                return ApplyTell(hypotheticalGame, tokens);
 
             switch (tokens[0])
             {
                 case "play":
-                    gameClone.PlayCard(int.Parse(tokens[1]));
+                    hypotheticalGame.PlayCard(int.Parse(tokens[1]));
                     break;
                 case "discard":
-                    gameClone.Discard(int.Parse(tokens[1]));
+                    hypotheticalGame.Discard(int.Parse(tokens[1]));
                     break;
             }
 
-            return gameClone;
+            return hypotheticalGame;
+        }
+
+        public void MakeMove(string move)
+        {
+            string[] tokens = move.Split();
+
+            if (tokens[0] == "tell")
+            {
+                Tell(tokens);
+                return;
+            }
+
+            switch (tokens[0])
+            {
+                case "play":
+                    _game.PlayCard(int.Parse(tokens[1]));
+                    return;
+                case "discard":
+                    _game.Discard(int.Parse(tokens[1]));
+                    return;
+            }
+        }
+
+        private Game GameWithHypothesis(IEnumerable<Card> hypotheticalHand, Card hypotheticalNextCard)
+        {
+            var ret = _game.Clone();
+            ret.PlayerHands[_playerIndex] = hypotheticalHand.ToList();
+            ret.Deck = new Deck(new List<Card> { hypotheticalNextCard });
+            return ret;
         }
 
         Game ApplyTell(Game gameClone, string[] moveTokens)
@@ -83,11 +115,28 @@ namespace Agents
             }
         }
 
+        void Tell(string[] moveTokens)
+        {
+            int playerIndex = int.Parse(moveTokens[2]);
+
+            if (moveTokens[4] == "color")
+            {
+                Color color = Enum.Parse<Color>(moveTokens[5], ignoreCase: true);
+                _game.TellColor(playerIndex, color);
+            }
+            else
+            {
+                int number = int.Parse(moveTokens[5]);
+                _game.TellNumber(playerIndex, number);
+            }
+        }
+
         public int NumPlayers => _game.NumPlayers;
         public int NumTokens => _game.NumTokens;
         public int NumLives => _game.NumLives;
         public List<Card> DiscardPile => _game.DiscardPile;
         public MoveInfo LastMoveInfo => _game.LastMoveInfo;
+        public int CardsPerPlayer => _game.CardsPerPlayer;
 
         public List<List<Card>> OtherHands
         {

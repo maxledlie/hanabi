@@ -26,14 +26,18 @@ namespace Agents
         /// Represents the agent's current knowledge of the probability distributions of the cards
         /// in its own hand.
         /// </summary>
-        public List<OptionTracker> HandOptions { get; } = new List<OptionTracker>();
+        public List<OptionTracker> HandOptionTrackers { get; } = new List<OptionTracker>();
+
+        public OptionTracker DeckOptionTracker { get; private set; }
 
         public BayesianAgent(int playerIndex, GameView gameAdapter)
         {
             PlayerIndex = playerIndex;
             _view = gameAdapter;
 
-            HandOptions = InitialOptions();
+            OptionTracker initialOptions = InitialOptions();
+            HandOptionTrackers = Enumerable.Range(0, _view.CardsPerPlayer).Select(i => initialOptions.Clone()).ToList();
+            DeckOptionTracker = initialOptions.Clone();
         }
 
         public double Evaluate(Game game, int depth)
@@ -59,17 +63,24 @@ namespace Agents
             string? bestMove = availableMoves.MaxBy(move =>
             {
                 // Generate a random hand from the individual probability distributions
-                IList<IList<(Color, int)>> hands = DrawFromOptions(HandOptions, _numMonteCarloSamples);
+                IList<HiddenState> possibleHiddenStates = DrawHiddenStates(HandOptionTrackers, DeckOptionTracker, _numMonteCarloSamples);
 
-                double totalScore = hands.Sum(hand =>
+                double totalScore = possibleHiddenStates.Sum(hiddenState =>
                 {
-                    Game resultingState = _view.TestMove(move, hand);
+                    var hand = hiddenState.Hand.Select(c => new Card(c.Item1, c.Item2));
+                    var nextCard = new Card(hiddenState.NextCard.Item1, hiddenState.NextCard.Item2);
+                    Game resultingState = _view.TestMove(move, hand, nextCard);
                     return Evaluate(resultingState, _evaluationDepth);
                 });
 
                 double expectedScore = totalScore / _numMonteCarloSamples;
                 return expectedScore;
             });
+
+            if (bestMove == null)
+                throw new Exception("Failed to select a best move");
+
+            _view.MakeMove(bestMove);
         }
 
         /// <summary>
@@ -77,15 +88,15 @@ namespace Agents
         /// The distributions for each hand position are not independent: drawing a card from e.g. position 1 removes
         /// it as an option from all subsequent hand positions.
         /// </summary>
-        private IList<IList<(Color, int)>> DrawFromOptions(IList<OptionTracker> options, int numDraws)
+        private IList<HiddenState> DrawHiddenStates(IList<OptionTracker> handOptionTrackers, OptionTracker deckOptionTracker, int numDraws)
         {
-            var hands = new List<IList<(Color, int)>>();
+            var hiddenStates = new List<HiddenState>();
             for (int i = 0; i < numDraws; i++)
             {
                 var drawnHand = new List<(Color, int)>();
-                for (int iPos = 0; iPos < options.Count(); iPos++)
+                for (int iPos = 0; iPos < handOptionTrackers.Count(); iPos++)
                 {
-                    var opts = options[iPos].Clone();
+                    var opts = handOptionTrackers[iPos].Clone();
                     foreach ((Color color, int number) in drawnHand)
                         opts.RemoveInstance(color, number);
 
@@ -94,13 +105,25 @@ namespace Agents
                     drawnHand.Add(dist.GetNext());
                 }
 
-                hands.Add(drawnHand);
+                var deckOpts = deckOptionTracker.Clone();
+                foreach ((Color color, int number) in drawnHand)
+                    deckOpts.RemoveInstance(color, number);
+
+                Dictionary<(Color, int), double> deckProbabilities = deckOpts.GetProbabilities();
+                var deckDist = new DiscreteProbabilityDistribution<(Color, int)>(deckProbabilities);
+                var nextCard = deckDist.GetNext();
+
+                hiddenStates.Add(new HiddenState
+                {
+                    Hand = drawnHand,
+                    NextCard = nextCard
+                });
             }
 
-            return hands;
+            return hiddenStates;
         }
 
-        private List<OptionTracker> InitialOptions()
+        private OptionTracker InitialOptions()
         {
             var cardCounts = new Dictionary<(Color, int), int>();
             foreach (Color color in Enum.GetValues(typeof(Color)))
@@ -110,7 +133,7 @@ namespace Agents
             for (int iHand = 0; iHand < _view.OtherHands.Count; iHand++)
             {
                 List<Card> hand = _view.OtherHands[iHand];
-                for (int iCard = 0; iCard < 5; iCard++)
+                for (int iCard = 0; iCard < _view.CardsPerPlayer; iCard++)
                 {
                     Card card = hand[iCard];
                     var key = (card.Color, card.Number);
@@ -118,10 +141,9 @@ namespace Agents
                 }
             }
 
-            return Enumerable.Range(0, 5).Select(i => new OptionTracker(
-                cardCounts.ToDictionary(
-                    pair => pair.Key,
-                    pair => Deck.NumInstances(pair.Key.Item2) - pair.Value))).ToList();
+            return new OptionTracker(cardCounts.ToDictionary(
+                pair => pair.Key,
+                pair => Deck.NumInstances(pair.Key.Item2) - pair.Value));
         }
 
         public void RespondToMove(MoveInfo moveInfo)
@@ -148,14 +170,14 @@ namespace Agents
             if (info.RecipientIndex != this.PlayerIndex)
                 return;
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < _view.CardsPerPlayer; i++)
             {
                 if (info.HandPositions.Contains(i))
                 {
-                    HandOptions[i].NumberIs(info.Number);
+                    HandOptionTrackers[i].NumberIs(info.Number);
                 } else
                 {
-                    HandOptions[i].NumberIsNot(info.Number);
+                    HandOptionTrackers[i].NumberIsNot(info.Number);
                 }
             }
         }
@@ -165,15 +187,15 @@ namespace Agents
             if (info.RecipientIndex != this.PlayerIndex)
                 return;
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < _view.CardsPerPlayer; i++)
             {
                 if (info.HandPositions.Contains(i))
                 {
-                    HandOptions[i].ColorIs(info.Color);
+                    HandOptionTrackers[i].ColorIs(info.Color);
                 }
                 else
                 {
-                    HandOptions[i].ColorIsNot(info.Color);
+                    HandOptionTrackers[i].ColorIsNot(info.Color);
                 }
             }
         }
@@ -184,22 +206,18 @@ namespace Agents
             {
                 // The top card on the discard pile will be the one I just discarded.
                 Card discarded = _view.DiscardPile.Last();
-                for (int i = 0; i < 5; i++)
-                {
-                    HandOptions[i].RemoveInstance(discarded.Color, discarded.Number);
-                }
+                foreach (var tracker in HandOptionTrackers)
+                    tracker.RemoveInstance(discarded.Color, discarded.Number);
             } else
             {
                 int otherPlayerIndex = info.PlayerIndex > this.PlayerIndex ? info.PlayerIndex - 1 : info.PlayerIndex;
 
                 // Make a note of the discarding player's replacement card if they got one
-                if (_view.OtherHands[otherPlayerIndex].Count == 5)
+                if (_view.OtherHands[otherPlayerIndex].Count == _view.CardsPerPlayer)
                 {
-                    Card replacementCard = _view.OtherHands[otherPlayerIndex][4];
-                    for (int i = 0; i < 5; i++)
-                    {
-                        HandOptions[i].RemoveInstance(replacementCard.Color, replacementCard.Number);
-                    }
+                    Card replacementCard = _view.OtherHands[otherPlayerIndex].Last();
+                    foreach (var tracker in HandOptionTrackers)
+                        tracker.RemoveInstance(replacementCard.Color, replacementCard.Number);
                 }
             }
         }
@@ -208,22 +226,18 @@ namespace Agents
         {
             if (info.PlayerIndex == this.PlayerIndex)
             {
-                for (int i = 0; i < 5; i++)
-                {
-                    HandOptions[i].RemoveInstance(info.CardColor, info.CardNumber);
-                }
+                foreach (var tracker in HandOptionTrackers)
+                    tracker.RemoveInstance(info.CardColor, info.CardNumber);
             } else
             {
                 int otherPlayerIndex = info.PlayerIndex > this.PlayerIndex ? info.PlayerIndex - 1 : info.PlayerIndex;
 
                 // Make a note of the playing player's replacement card if they got one
-                if (_view.OtherHands[otherPlayerIndex].Count == 5)
+                if (_view.OtherHands[otherPlayerIndex].Count == _view.CardsPerPlayer)
                 {
-                    Card replacementCard = _view.OtherHands[otherPlayerIndex][4];
-                    for (int i = 0; i < 5; i++)
-                    {
-                        HandOptions[i].RemoveInstance(replacementCard.Color, replacementCard.Number);
-                    }
+                    Card replacementCard = _view.OtherHands[otherPlayerIndex].Last();
+                    foreach (var tracker in HandOptionTrackers)
+                        tracker.RemoveInstance(replacementCard.Color, replacementCard.Number);
                 }
             }
         }
