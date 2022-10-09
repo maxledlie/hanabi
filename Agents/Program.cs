@@ -1,12 +1,26 @@
 ﻿using Hanabi;
+using CommandLine;
 
 namespace Agents
 {
+    public class Options
+    {
+        [Option('s', "seed", Required = false, HelpText = "You can provide a random seed for reproducible RNG")]
+        public int? Seed { get; set; } = null;
+    }
+
     public class Program
     {
         public static void Main(string[] args)
         {
-            var randomizer = new Randomizer();
+            Parser.Default.ParseArguments<Options>(args)
+                .WithParsed(Run)
+                .WithNotParsed(HandleParseError);
+        }
+
+        public static void Run(Options options)
+        {
+            var randomizer = new Randomizer(options.Seed);
             Console.WriteLine($"Random seed: {randomizer.Seed}");
 
             int numPlayers = 4;
@@ -27,6 +41,14 @@ namespace Agents
             }
 
             Console.WriteLine($"Game over! Final score: {game.Score()}");
+        }
+
+        public static void HandleParseError(IEnumerable<Error> errors)
+        {
+            foreach (var err in errors)
+            {
+                Console.WriteLine(err);
+            }
         }
     }
 }
