@@ -60,7 +60,7 @@
             _players[playerIndex] = agent;
         }
 
-        public void Discard(int positionInHand)
+        public void Discard(int positionInHand, bool informAgents = true)
         {
             if (NumTokens < MAX_TOKENS)
                 NumTokens++;
@@ -81,15 +81,18 @@
                 CardNumber = discardedCard.Number
             };
 
-            foreach (var agent in _players.Values)
+            if (informAgents)
             {
-                agent.RespondToMove(moveInfo);
+                foreach (var agent in _players.Values)
+                {
+                    agent.RespondToMove(moveInfo);
+                }
             }
 
             EndTurn();
         }
 
-        public void TellColor(int player, Color color)
+        public void TellColor(int player, Color color, bool informAgents = true)
         {
             if (NumTokens <= 0)
                 throw new RuleViolationException("At least one token is required to tell anything");
@@ -111,14 +114,18 @@
                 HandPositions = Enumerable.Range(0, CardsPerPlayer).Where(i => PlayerHands[player][i].Color == color).ToList()
             };
 
-            foreach (var agent in _players.Values)
+            if (informAgents)
             {
-                agent.RespondToMove(moveInfo);
+                foreach (var agent in _players.Values)
+                {
+                    agent.RespondToMove(moveInfo);
+                }
             }
+            
             EndTurn();
         }
 
-        public void TellNumber(int player, int number)
+        public void TellNumber(int player, int number, bool informAgents = true)
         {
             if (NumTokens <= 0)
                 throw new RuleViolationException("At least one token is required to tell anything");
@@ -145,14 +152,18 @@
                 HandPositions = Enumerable.Range(0, CardsPerPlayer).Where(i => PlayerHands[player][i].Number == number).ToList()
             };
 
-            foreach (var agent in _players.Values)
+            if (informAgents)
             {
-                agent.RespondToMove(moveInfo);
+                foreach (var agent in _players.Values)
+                {
+                    agent.RespondToMove(moveInfo);
+                }
             }
+
             EndTurn();
         }
 
-        public void PlayCard(int positionInHand)
+        public void PlayCard(int positionInHand, bool informAgents = true)
         {
             Card playedCard = PlayerHands[CurrentPlayer][positionInHand];
             
@@ -194,9 +205,12 @@
                 CardNumber = playedCard.Number,
             };
 
-            foreach (var agent in _players.Values)
+            if (informAgents)
             {
-                agent.RespondToMove(moveInfo);
+                foreach (var agent in _players.Values)
+                {
+                    agent.RespondToMove(moveInfo);
+                }
             }
 
             EndTurn();

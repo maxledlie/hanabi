@@ -54,15 +54,15 @@ namespace Agents
             string[] tokens = move.Split();
 
             if (tokens[0] == "tell")
-                return ApplyTell(hypotheticalGame, tokens);
+                return ApplyTell(hypotheticalGame, tokens, informAgents: false);
 
             switch (tokens[0])
             {
                 case "play":
-                    hypotheticalGame.PlayCard(int.Parse(tokens[1]));
+                    hypotheticalGame.PlayCard(int.Parse(tokens[1]), informAgents: false);
                     break;
                 case "discard":
-                    hypotheticalGame.Discard(int.Parse(tokens[1]));
+                    hypotheticalGame.Discard(int.Parse(tokens[1]), informAgents: false);
                     break;
             }
 
@@ -75,7 +75,7 @@ namespace Agents
 
             if (tokens[0] == "tell")
             {
-                Tell(tokens);
+                _game = ApplyTell(_game, tokens);
                 return;
             }
 
@@ -98,36 +98,20 @@ namespace Agents
             return ret;
         }
 
-        Game ApplyTell(Game gameClone, string[] moveTokens)
+        Game ApplyTell(Game gameClone, string[] moveTokens, bool informAgents = true)
         {
             int playerIndex = int.Parse(moveTokens[2]);
 
             if (moveTokens[4] == "color")
             {
                 Color color = Enum.Parse<Color>(moveTokens[5], ignoreCase: true);
-                gameClone.TellColor(playerIndex, color);
+                gameClone.TellColor(playerIndex, color, informAgents);
                 return gameClone;
             } else
             {
                 int number = int.Parse(moveTokens[5]);
-                gameClone.TellNumber(playerIndex, number);
+                gameClone.TellNumber(playerIndex, number, informAgents);
                 return gameClone;
-            }
-        }
-
-        void Tell(string[] moveTokens)
-        {
-            int playerIndex = int.Parse(moveTokens[2]);
-
-            if (moveTokens[4] == "color")
-            {
-                Color color = Enum.Parse<Color>(moveTokens[5], ignoreCase: true);
-                _game.TellColor(playerIndex, color);
-            }
-            else
-            {
-                int number = int.Parse(moveTokens[5]);
-                _game.TellNumber(playerIndex, number);
             }
         }
 
