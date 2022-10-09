@@ -1,21 +1,31 @@
-﻿namespace Agents
+﻿using Hanabi;
+
+namespace Agents
 {
     public class DiscreteProbabilityDistribution<T> where T : notnull
     {
         private T[] _items;
         private double[] _lowerLimits;
-        private Random _random;
-        public DiscreteProbabilityDistribution(Dictionary<T, double> probabilities, int? seed = null)
+        private Randomizer _random;
+        public DiscreteProbabilityDistribution(Dictionary<T, double> probabilities, Randomizer random)
         {
             _items = probabilities.Keys.ToArray();
             _lowerLimits = new double[_items.Count()];
+
+            foreach (double d in _lowerLimits)
+            {
+                if (double.IsNaN(d))
+                {
+                    throw new Exception();
+                }
+            }
 
             for (int i = 1; i < _items.Count(); i++)
             {
                 _lowerLimits[i] = _lowerLimits[i - 1] + probabilities[_items[i - 1]];
             }
 
-            _random = seed is not null ? new Random(seed.Value) : new Random();
+            _random = random;
         }
 
         public T GetNext()

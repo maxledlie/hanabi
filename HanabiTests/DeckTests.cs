@@ -10,7 +10,7 @@ namespace HanabiTests
         [Test]
         public void Deck_ContainsCorrectCards()
         {
-            var deck = Deck.Random();
+            var deck = Deck.Random(new Randomizer());
 
             var numberCounts = new Dictionary<int, int>();
             var colorCounts = new Dictionary<Color, int>();

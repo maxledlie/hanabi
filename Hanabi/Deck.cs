@@ -21,7 +21,7 @@
             return _cards[_index - 1];
         }
 
-        public static Deck Random()
+        public static Deck Random(Randomizer randomizer)
         {
             var cards = new List<Card>();
             foreach (Color color in Enum.GetValues(typeof(Color)))
@@ -39,17 +39,16 @@
                 cards.Add(new Card(color, 5));
             }
 
-            Shuffle(cards);
+            Shuffle(cards, randomizer);
             return new Deck(cards);
         }
 
-        static void Shuffle<T>(List<T> list)
+        static void Shuffle<T>(List<T> list, Randomizer randomizer)
         {
-            var rand = new Random();
             int n = list.Count;
             for (int i = 0; i < n - 1; i++)
             {
-                int j = rand.Next(i, n - 1);
+                int j = randomizer.Next(i, n - 1);
                 (list[j], list[i]) = (list[i], list[j]);
             }
         }

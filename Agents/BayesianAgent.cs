@@ -56,14 +56,16 @@ namespace Agents
             return game.Score() + LivesFactor(game.NumLives) + TokensFactor(game.NumTokens);
         }
 
-        public void TakeTurn()
+        public void TakeTurn(Randomizer randomizer)
         {
             IEnumerable<string> availableMoves = _view.AvailableMoves();
 
-            string? bestMove = availableMoves.MaxBy(move =>
+            double bestExpectedScore = double.NegativeInfinity;
+            string? bestMove = null;
+            foreach (string move in availableMoves)
             {
                 // Generate a random hand from the individual probability distributions
-                IList<HiddenState> possibleHiddenStates = DrawHiddenStates(HandOptionTrackers, DeckOptionTracker, _numMonteCarloSamples);
+                IList<HiddenState> possibleHiddenStates = DrawHiddenStates(HandOptionTrackers, DeckOptionTracker, _numMonteCarloSamples, randomizer);
 
                 double totalScore = possibleHiddenStates.Sum(hiddenState =>
                 {
@@ -74,12 +76,17 @@ namespace Agents
                 });
 
                 double expectedScore = totalScore / _numMonteCarloSamples;
-                return expectedScore;
-            });
+                if (expectedScore > bestExpectedScore)
+                {
+                    bestExpectedScore = expectedScore;
+                    bestMove = move;
+                }
+            }
 
             if (bestMove == null)
                 throw new Exception("Failed to select a best move");
 
+            Console.WriteLine($"Player {PlayerIndex}: {bestMove} (expected score {bestExpectedScore})");
             _view.MakeMove(bestMove);
         }
 
@@ -88,7 +95,7 @@ namespace Agents
         /// The distributions for each hand position are not independent: drawing a card from e.g. position 1 removes
         /// it as an option from all subsequent hand positions.
         /// </summary>
-        private IList<HiddenState> DrawHiddenStates(IList<OptionTracker> handOptionTrackers, OptionTracker deckOptionTracker, int numDraws)
+        private IList<HiddenState> DrawHiddenStates(IList<OptionTracker> handOptionTrackers, OptionTracker deckOptionTracker, int numDraws, Randomizer randomizer)
         {
             var hiddenStates = new List<HiddenState>();
             for (int i = 0; i < numDraws; i++)
@@ -101,7 +108,7 @@ namespace Agents
                         opts.RemoveInstance(color, number);
 
                     Dictionary<(Color, int), double> probabilities = opts.GetProbabilities();
-                    var dist = new DiscreteProbabilityDistribution<(Color, int)>(probabilities);
+                    var dist = new DiscreteProbabilityDistribution<(Color, int)>(probabilities, randomizer);
                     drawnHand.Add(dist.GetNext());
                 }
 
@@ -110,7 +117,7 @@ namespace Agents
                     deckOpts.RemoveInstance(color, number);
 
                 Dictionary<(Color, int), double> deckProbabilities = deckOpts.GetProbabilities();
-                var deckDist = new DiscreteProbabilityDistribution<(Color, int)>(deckProbabilities);
+                var deckDist = new DiscreteProbabilityDistribution<(Color, int)>(deckProbabilities, randomizer);
                 var nextCard = deckDist.GetNext();
 
                 hiddenStates.Add(new HiddenState

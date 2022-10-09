@@ -71,7 +71,7 @@ namespace HanabiTests
         [Test]
         public void Game_SetUpCorrectly()
         {
-            var game = new Game(3, Deck.Random());
+            var game = new Game(3, Deck.Random(new Randomizer()));
 
             Assert.That(game.NumLives, Is.EqualTo(3));
             Assert.That(game.NumTokens, Is.EqualTo(8));
@@ -85,7 +85,7 @@ namespace HanabiTests
         [TestCase(5, 4)]
         public void Game_PlayersReceiveCorrectNumberOfCards(int numPlayers, int numCards)
         {
-            var game = new Game(numPlayers, Deck.Random());
+            var game = new Game(numPlayers, Deck.Random(new Randomizer()));
 
             for (int i = 0; i < numPlayers; i++)
                 Assert.That(game.PlayerHands[i].Count, Is.EqualTo(numCards));
@@ -94,7 +94,7 @@ namespace HanabiTests
         [Test]
         public void Game_FirstCardsAreDealtToPlayers()
         {
-            var deck = Deck.Random();
+            var deck = Deck.Random(new Randomizer());
             var game = new Game(3, deck);
 
             Assert.That(game.PlayerHands[0].Count, Is.EqualTo(5));
