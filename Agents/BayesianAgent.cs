@@ -213,6 +213,7 @@ namespace Agents
             {
                 // The top card on the discard pile will be the one I just discarded.
                 Card discarded = _view.DiscardPile.Last();
+                DeckOptionTracker.RemoveInstance(discarded.Color, discarded.Number);
                 foreach (var tracker in HandOptionTrackers)
                     tracker.RemoveInstance(discarded.Color, discarded.Number);
             } else
@@ -223,6 +224,7 @@ namespace Agents
                 if (_view.OtherHands[otherPlayerIndex].Count == _view.CardsPerPlayer)
                 {
                     Card replacementCard = _view.OtherHands[otherPlayerIndex].Last();
+                    DeckOptionTracker.RemoveInstance(replacementCard.Color, replacementCard.Number);
                     foreach (var tracker in HandOptionTrackers)
                         tracker.RemoveInstance(replacementCard.Color, replacementCard.Number);
                 }
@@ -233,6 +235,7 @@ namespace Agents
         {
             if (info.PlayerIndex == this.PlayerIndex)
             {
+                DeckOptionTracker.RemoveInstance(info.CardColor, info.CardNumber);
                 foreach (var tracker in HandOptionTrackers)
                     tracker.RemoveInstance(info.CardColor, info.CardNumber);
             } else
@@ -243,6 +246,7 @@ namespace Agents
                 if (_view.OtherHands[otherPlayerIndex].Count == _view.CardsPerPlayer)
                 {
                     Card replacementCard = _view.OtherHands[otherPlayerIndex].Last();
+                    DeckOptionTracker.RemoveInstance(replacementCard.Color, replacementCard.Number);
                     foreach (var tracker in HandOptionTrackers)
                         tracker.RemoveInstance(replacementCard.Color, replacementCard.Number);
                 }
