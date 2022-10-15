@@ -44,12 +44,29 @@ namespace Agents
                 {
                     string[] tokens = input.Split();
                     int playerIndex = int.Parse(tokens[1]);
-                    int optionsIndex = int.Parse(tokens[2]);
 
                     var agent = _agents[playerIndex];
-                    var tracker = optionsIndex >= agent.HandOptionTrackers.Count ? agent.DeckOptionTracker : agent.HandOptionTrackers[optionsIndex];
 
-                    Console.WriteLine(tracker.ToString());
+                    var trackerTables = agent.HandOptionTrackers.Select(tracker => tracker.TableRepresentation())
+                        .Append(agent.DeckOptionTracker.TableRepresentation());
+
+                    int tableWidth = trackerTables.First().First().Length + 3;
+
+                    // Write headers for tracker tables
+                    var tableNames = agent.HandOptionTrackers.Select((tracker, i) => $"Hand Pos {i}")
+                        .Append("Deck")
+                        .Select(name => name.PadRight(tableWidth));
+
+                    string headerLine = string.Join("", tableNames);
+
+                    Console.WriteLine();
+                    Console.WriteLine(headerLine);
+                    for (int iLine = 0; iLine < trackerTables.First().Count(); iLine++)
+                    {
+                        string line = string.Join("   ", trackerTables.Select(table => table.ElementAt(iLine)));
+                        Console.WriteLine(line);
+                    }
+                    Console.WriteLine();
                 }
             }
 

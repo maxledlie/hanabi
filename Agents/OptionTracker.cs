@@ -69,8 +69,6 @@ namespace Agents
                 _numLeftByType[(color, number)]--;
         }
 
-        int NumLeftTotal() => _numLeftByType.Values.Sum();
-
         public Dictionary<(Color, int), double> GetProbabilities()
         {
             int numLeftTotal = _numLeftByType.Values.Sum();
@@ -83,9 +81,9 @@ namespace Agents
         }
 
         /// <summary>
-        /// Writes the number of each card option remaining in a table
+        /// Returns a tabular representation of the options as a list of lines
         /// </summary>
-        public override string ToString()
+        public IEnumerable<string> TableRepresentation()
         {
             var colorAbbrevs = new Dictionary<Color, string>
             {
@@ -97,7 +95,7 @@ namespace Agents
             };
 
             var lines = new List<string>();
-            string numberHeader = "  1  2  3  4  5";
+            string numberHeader = "  1  2  3  4  5  ";
             lines.Add(numberHeader);
             foreach (Color color in colorAbbrevs.Keys)
             {
@@ -111,7 +109,7 @@ namespace Agents
                 lines.Add(line);
             }
 
-            return string.Join(Environment.NewLine, lines);
+            return lines;
         }
     }
 }
