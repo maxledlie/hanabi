@@ -22,6 +22,8 @@ namespace Agents
         /// </summary>
         public Func<int, double> TokensFactor { get; set; } = n => n;
 
+        public int UnwinnablePenalty { get; set; } = 20;
+
         /// <summary>
         /// Represents the agent's current knowledge of the probability distributions of the cards
         /// in its own hand.
@@ -50,10 +52,8 @@ namespace Agents
 
         public double EvaluateDepthZero(Game game)
         {
-            if (!game.IsWinnable())
-                return double.NegativeInfinity;
-
-            return game.Score() + LivesFactor(game.NumLives) + TokensFactor(game.NumTokens);
+            double draftScore = game.Score() + LivesFactor(game.NumLives) + TokensFactor(game.NumTokens);
+            return game.IsWinnable() ? draftScore : draftScore - UnwinnablePenalty;
         }
 
         public void TakeTurn(Randomizer randomizer)
