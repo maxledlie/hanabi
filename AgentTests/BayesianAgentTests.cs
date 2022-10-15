@@ -170,6 +170,54 @@ namespace AgentTests
         }
 
         [Test]
+        public void HandOptionTrackers_AfterOwnPlay_AccountsForChardShift()
+        {
+            var game = new Game(3, GameTests.TestDeck());
+            var view = new GameView(1, game);
+            var agent = new BayesianAgent(1, view);
+
+            game.RegisterAgent(1, agent);
+
+            // Player 0 tells our agent that the first two cards in their hand are yellow
+            game.TellColor(1, Color.Yellow);
+
+            // Our agent plays the card in position 1
+            game.PlayCard(1);
+
+            // They should no longer believe that the card in position 1 must be yellow.
+            // In fact, they should know it is NOT yellow.
+            var tracker = agent.HandOptionTrackers[1];
+            for (int number = 1; number < 5; number++)
+            {
+                Assert.That(tracker.Get(Color.Yellow, number), Is.Zero);
+            }
+        }
+
+        [Test]
+        public void HandOptionTrackers_AfterOwnDiscard_AccountsForCardShift()
+        {
+            var game = new Game(3, GameTests.TestDeck());
+            var view = new GameView(1, game);
+            var agent = new BayesianAgent(1, view);
+
+            game.RegisterAgent(1, agent);
+
+            // Player 0 tells our agent that the first two cards in their hand are yellow
+            game.TellColor(1, Color.Yellow);
+
+            // Our agent discards the card in position 1
+            game.Discard(1);
+
+            // They should no longer believe that the card in position 1 must be yellow.
+            // In fact, they should know it is NOT yellow.
+            var tracker = agent.HandOptionTrackers[1];
+            for (int number = 1; number < 5; number++)
+            {
+                Assert.That(tracker.Get(Color.Yellow, number), Is.Zero);
+            }
+        }
+
+        [Test]
         public void HandOptionTrackers_AfterTeammatePlay_ReflectsNewKnowledge()
         {
             var game = new Game(3, GameTests.TestDeck());

@@ -26,7 +26,7 @@ namespace Agents
         /// Represents the agent's current knowledge of the probability distributions of the cards
         /// in its own hand.
         /// </summary>
-        public List<OptionTracker> HandOptionTrackers { get; } = new List<OptionTracker>();
+        public List<OptionTracker> HandOptionTrackers { get; private set; } = new List<OptionTracker>();
 
         public OptionTracker DeckOptionTracker { get; private set; }
 
@@ -213,6 +213,8 @@ namespace Agents
             {
                 // The top card on the discard pile will be the one I just discarded.
                 Card discarded = _view.DiscardPile.Last();
+                ShiftTrackers(info.HandPosition);
+
                 DeckOptionTracker.RemoveInstance(discarded.Color, discarded.Number);
                 foreach (var tracker in HandOptionTrackers)
                     tracker.RemoveInstance(discarded.Color, discarded.Number);
@@ -235,6 +237,8 @@ namespace Agents
         {
             if (info.PlayerIndex == this.PlayerIndex)
             {
+                ShiftTrackers(info.HandPosition);
+
                 DeckOptionTracker.RemoveInstance(info.CardColor, info.CardNumber);
                 foreach (var tracker in HandOptionTrackers)
                     tracker.RemoveInstance(info.CardColor, info.CardNumber);
@@ -251,6 +255,27 @@ namespace Agents
                         tracker.RemoveInstance(replacementCard.Color, replacementCard.Number);
                 }
             }
+        }
+
+        /// <summary>
+        /// When a card is removed from the hand by discard or play, the option trackers must be shifted to account for this.
+        /// Each card to the right of the discarded position is shifted left, and the rightmost tracker contains the updated
+        /// knowledge about the deck
+        /// </summary>
+        void ShiftTrackers(int removedIndex)
+        {
+            var newTrackers = new List<OptionTracker>();
+            for (int i = 0; i < removedIndex; i++)
+            {
+                newTrackers.Add(HandOptionTrackers[i].Clone());
+            }
+            for (int i = removedIndex; i < HandOptionTrackers.Count - 1; i++)
+            {
+                newTrackers.Add(HandOptionTrackers[i + 1].Clone());
+            }
+            newTrackers.Add(DeckOptionTracker.Clone());
+
+            HandOptionTrackers = newTrackers;
         }
     }
 }

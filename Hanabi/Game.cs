@@ -81,6 +81,7 @@
             var moveInfo = new DiscardInfo
             {
                 PlayerIndex = CurrentPlayer,
+                HandPosition = positionInHand,
                 CardColor = discardedCard.Color,
                 CardNumber = discardedCard.Number
             };
@@ -205,6 +206,7 @@
             var moveInfo = new PlayCardInfo
             {
                 PlayerIndex = CurrentPlayer,
+                HandPosition = positionInHand,
                 CardColor = playedCard.Color,
                 CardNumber = playedCard.Number,
             };
