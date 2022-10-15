@@ -12,17 +12,17 @@ namespace Agents
             _items = probabilities.Keys.ToArray();
             _lowerLimits = new double[_items.Count()];
 
+            for (int i = 1; i < _items.Count(); i++)
+            {
+                _lowerLimits[i] = _lowerLimits[i - 1] + probabilities[_items[i - 1]];
+            }
+
             foreach (double d in _lowerLimits)
             {
                 if (double.IsNaN(d))
                 {
                     throw new Exception();
                 }
-            }
-
-            for (int i = 1; i < _items.Count(); i++)
-            {
-                _lowerLimits[i] = _lowerLimits[i - 1] + probabilities[_items[i - 1]];
             }
 
             _random = random;

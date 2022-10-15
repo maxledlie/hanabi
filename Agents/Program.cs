@@ -35,12 +35,8 @@ namespace Agents
                 agents.Add(agent);
             }
 
-            while (!game.IsOver)
-            {
-                agents[game.CurrentPlayer].TakeTurn(randomizer);
-            }
-
-            Console.WriteLine($"Game over! Final score: {game.Score()}");
+            var runner = new GameRunner(game, agents, randomizer);
+            runner.Run();
         }
 
         public static void HandleParseError(IEnumerable<Error> errors)

@@ -11,12 +11,12 @@ namespace Agents
             _numLeftByType = numLeftByType;
         }
 
-        public double Get(Card card) => Get(card.Color, card.Number);
+        public int Get(Card card) => Get(card.Color, card.Number);
 
-        public double Get(Color color, int number)
+        public int Get(Color color, int number)
         {
             var key = (color, number);
-            return _numLeftByType.ContainsKey(key) ? (double)_numLeftByType[key] / NumLeftTotal() : 0;
+            return _numLeftByType.ContainsKey(key) ? _numLeftByType[key] : 0;
         }
 
         public void ColorIs(Color color)
@@ -80,6 +80,38 @@ namespace Agents
         public OptionTracker Clone()
         {
             return new OptionTracker(new Dictionary<(Color, int), int>(_numLeftByType));
+        }
+
+        /// <summary>
+        /// Writes the number of each card option remaining in a table
+        /// </summary>
+        public override string ToString()
+        {
+            var colorAbbrevs = new Dictionary<Color, string>
+            {
+                { Color.Red, "R" },
+                { Color.Green, "G" },
+                { Color.Blue, "B" },
+                { Color.Yellow, "Y" },
+                { Color.White, "W" }
+            };
+
+            var lines = new List<string>();
+            string numberHeader = "  1  2  3  4  5";
+            lines.Add(numberHeader);
+            foreach (Color color in colorAbbrevs.Keys)
+            {
+                string line = colorAbbrevs[color] + " ";
+                foreach (int number in Enumerable.Range(1, 5))
+                {
+                    int numRemaining = Get(color, number);
+                    string numRemainingRep = numRemaining == 0 ? " " : numRemaining.ToString();
+                    line += numRemainingRep + "  ";
+                }
+                lines.Add(line);
+            }
+
+            return string.Join(Environment.NewLine, lines);
         }
     }
 }
