@@ -24,7 +24,7 @@ namespace Agents
         {
             while (!_game.IsOver)
             {
-                ReadCommand();
+                //ReadCommand();
                 _agents[_game.CurrentPlayer].TakeTurn(_randomizer);
             }
 

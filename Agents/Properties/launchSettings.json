@@ -1,8 +1,7 @@
 {
   "profiles": {
     "Agents": {
-      "commandName": "Project",
-      "commandLineArgs": "-s -213510921"
+      "commandName": "Project"
     }
   }
 }

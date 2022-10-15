@@ -111,5 +111,7 @@ namespace Agents
 
             return lines;
         }
+
+        public bool HasOptions() => _numLeftByType.Values.Max() > 0;
     }
 }

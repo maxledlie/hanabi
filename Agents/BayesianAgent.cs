@@ -5,7 +5,7 @@ namespace Agents
     public class BayesianAgent : IAgent
     {
         GameView _view;
-        const int _numMonteCarloSamples = 1000;
+        const int _numMonteCarloSamples = 100;
         const int _evaluationDepth = 0;
 
         public int PlayerIndex { get; private set; }
@@ -70,7 +70,10 @@ namespace Agents
                 double totalScore = possibleHiddenStates.Sum(hiddenState =>
                 {
                     var hand = hiddenState.Hand.Select(c => new Card(c.Item1, c.Item2));
-                    var nextCard = new Card(hiddenState.NextCard.Item1, hiddenState.NextCard.Item2);
+
+                    Card? nextCard = hiddenState.NextCard == null
+                        ? null
+                        : new Card(hiddenState.NextCard.Value.Item1, hiddenState.NextCard.Value.Item2);
                     Game resultingState = _view.TestMove(move, hand, nextCard);
                     return Evaluate(resultingState, _evaluationDepth);
                 });
@@ -116,15 +119,21 @@ namespace Agents
                 foreach ((Color color, int number) in drawnHand)
                     deckOpts.RemoveInstance(color, number);
 
-                Dictionary<(Color, int), double> deckProbabilities = deckOpts.GetProbabilities();
-                var deckDist = new DiscreteProbabilityDistribution<(Color, int)>(deckProbabilities, randomizer);
-                var nextCard = deckDist.GetNext();
-
-                hiddenStates.Add(new HiddenState
+                if (!deckOpts.HasOptions())
                 {
-                    Hand = drawnHand,
-                    NextCard = nextCard
-                });
+
+                } else
+                {
+                    Dictionary<(Color, int), double> deckProbabilities = deckOpts.GetProbabilities();
+                    var deckDist = new DiscreteProbabilityDistribution<(Color, int)>(deckProbabilities, randomizer);
+                    var nextCard = deckDist.GetNext();
+
+                    hiddenStates.Add(new HiddenState
+                    {
+                        Hand = drawnHand,
+                        NextCard = nextCard
+                    });
+                }
             }
 
             return hiddenStates;
@@ -264,18 +273,10 @@ namespace Agents
         /// </summary>
         void ShiftTrackers(int removedIndex)
         {
-            var newTrackers = new List<OptionTracker>();
-            for (int i = 0; i < removedIndex; i++)
-            {
-                newTrackers.Add(HandOptionTrackers[i].Clone());
-            }
-            for (int i = removedIndex; i < HandOptionTrackers.Count - 1; i++)
-            {
-                newTrackers.Add(HandOptionTrackers[i + 1].Clone());
-            }
-            newTrackers.Add(DeckOptionTracker.Clone());
+            HandOptionTrackers.RemoveAt(removedIndex);
 
-            HandOptionTrackers = newTrackers;
+            if (DeckOptionTracker.HasOptions())
+                HandOptionTrackers.Add(DeckOptionTracker.Clone());
         }
     }
 }

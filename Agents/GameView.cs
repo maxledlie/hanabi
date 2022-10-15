@@ -47,7 +47,7 @@ namespace Agents
         /// <summary>
         /// Returns the game state that would result if the hidden cards had the provided values and the player made the provided move
         /// </summary>
-        public Game TestMove(string move, IEnumerable<Card> hypotheticalHand, Card hypotheticalNextCard)
+        public Game TestMove(string move, IEnumerable<Card> hypotheticalHand, Card? hypotheticalNextCard)
         {
             Game hypotheticalGame = GameWithHypothesis(hypotheticalHand, hypotheticalNextCard);
 
@@ -90,11 +90,16 @@ namespace Agents
             }
         }
 
-        private Game GameWithHypothesis(IEnumerable<Card> hypotheticalHand, Card hypotheticalNextCard)
+        private Game GameWithHypothesis(IEnumerable<Card> hypotheticalHand, Card? hypotheticalNextCard)
         {
             var ret = _game.Clone();
             ret.PlayerHands[_playerIndex] = hypotheticalHand.ToList();
-            ret.Deck = new Deck(new List<Card> { hypotheticalNextCard });
+
+            var hypotheticalDeck = new List<Card>();
+            if (hypotheticalNextCard != null)
+                hypotheticalDeck.Add(hypotheticalNextCard);
+
+            ret.Deck = new Deck(hypotheticalDeck);
             return ret;
         }
 
