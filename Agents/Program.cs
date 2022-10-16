@@ -7,6 +7,9 @@ namespace Agents
     {
         [Option('s', "seed", Required = false, HelpText = "You can provide a random seed for reproducible RNG")]
         public int? Seed { get; set; } = null;
+
+        [Option('d', "debug", HelpText = "Runs the game in debug mode, in which the user is prompted to enter debug commands after each round")]
+        public bool Debug { get; set; } = false;
     }
 
     public class Program
@@ -36,7 +39,7 @@ namespace Agents
             }
 
             var runner = new GameRunner(game, agents, randomizer);
-            runner.Run();
+            runner.Run(options.Debug);
         }
 
         public static void HandleParseError(IEnumerable<Error> errors)

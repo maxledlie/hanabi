@@ -1,9 +1,4 @@
 ﻿using Hanabi;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Agents
 {
@@ -20,11 +15,13 @@ namespace Agents
             _randomizer = randomizer;
         }
 
-        public void Run()
+        public void Run(bool debug)
         {
             while (!_game.IsOver)
             {
-                //ReadCommand();
+                if (debug)
+                    ReadCommand();
+
                 _agents[_game.CurrentPlayer].TakeTurn(_randomizer);
             }
 
